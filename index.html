@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AGE Game - Secure Edition</title>
+    <title>AGE GOLD - Official System</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        :root { --gold: #f1c40f; --bg: #000; --card: #111; --gray: #555; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        :root { --gold: #f1c40f; --bg: #000; --card: #111; --gray: #333; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
         
         /* المحفظة */
         #wallet-header { position: fixed; top: 10px; right: 10px; z-index: 2000; }
@@ -16,7 +16,6 @@
         .wallet-box input { background: #000; border: 1px solid #333; color: var(--gold); font-size: 10px; padding: 5px; width: 100px; border-radius: 5px; outline: none; }
         .btn-link { background: var(--gold); border: none; padding: 5px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 10px; }
 
-        /* الحاوية الرئيسية */
         .container { padding: 70px 15px 100px; text-align: center; }
         .hero { background: linear-gradient(180deg, #151515, #000); border: 1px solid #222; border-radius: 20px; padding: 30px 15px; margin-bottom: 20px; }
         .hero h1 { font-size: 50px; color: var(--gold); margin: 0; }
@@ -30,23 +29,27 @@
         .task-reward { color: var(--gold); font-size: 12px; }
         .task-btns { display: flex; gap: 8px; margin-top: 10px; }
         .btn-act { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
-        
         .btn-go { background: #fff; color: #000; }
-        /* زر التحقق المعطل */
-        .btn-v { background: var(--gray); color: #888; cursor: not-allowed; transition: 0.3s; }
-        /* زر التحقق المفعل */
+        .btn-v { background: var(--gray); color: #888; cursor: not-allowed; }
         .btn-v.ready { background: var(--gold); color: #000; cursor: pointer; }
         .btn-done { background: #222 !important; color: #555 !important; cursor: default; }
 
+        /* نظام الـ 7 أيام */
+        .days-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
+        .day-card { background: var(--card); border: 1px solid #222; padding: 15px; border-radius: 12px; opacity: 0.5; position: relative; }
+        .day-card.open { opacity: 1; border-color: var(--gold); }
+        .btn-claim { background: var(--gold); color: #000; border: none; padding: 8px; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 8px; font-size: 11px; }
+        .btn-claim:disabled { background: #222; color: #555; }
+
         /* التصنيفات */
         .list-title { color: var(--gold); border-right: 4px solid var(--gold); padding-right: 12px; text-align: right; margin: 25px 0 15px; font-size: 18px; }
-        .rank-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #0d0d0d; border-bottom: 1px solid #1a1a1a; margin-bottom: 4px; border-radius: 8px; }
+        .rank-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #0d0d0d; margin-bottom: 4px; border-radius: 8px; }
         .rank-info { display: flex; align-items: center; gap: 12px; }
         .rank-number { background: var(--gold); color: #000; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 12px; }
 
         /* المنيو السفلي */
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: #080808; border-top: 1px solid #222; display: flex; height: 75px; z-index: 1000; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #555; border: none; background: none; gap: 5px; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #555; border: none; background: none; gap: 5px; cursor: pointer; }
         .nav-item.active { color: var(--gold); border-top: 2px solid var(--gold); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -64,14 +67,35 @@
     <div class="container">
         <div class="hero">
             <h1 id="user-pts">0</h1>
-            <p id="user-name" style="color:#888;">جاري التحميل...</p>
+            <p id="user-name" style="color:#888;">@لاعب_مجهول</p>
         </div>
 
-        <div id="tab1" class="section active"><h3>الرئيسية</h3><p>أهلاً بك في AGE GOLD.</p></div>
-        <div id="tab2" class="section"><h3 class="list-title">مهام</h3><div id="social-tasks"></div></div>
-        <div id="tab3" class="section"><h3 class="list-title">مهام أسبوعية</h3><div class="task-card"><span class="task-title">المكافأة اليومية</span><button class="btn-act btn-v ready" id="week-btn" onclick="claimWeek()">استلام</button></div></div>
-        <div id="tab4" class="section"><h3 class="list-title">تصنيف الاحاله</h3><div id="ref-list"></div></div>
-        <div id="tab5" class="section"><h3 class="list-title">تصنيف النقاط</h3><div id="pts-list"></div></div>
+        <div id="tab1" class="section active">
+            <div style="background:#111; padding:20px; border-radius:15px; border:1px solid #222;">
+                <h3 style="color:var(--gold);">الرئيسية</h3>
+                <p>مرحباً بك! اتمم المهام واجمع نقاط $AGE يومياً.</p>
+            </div>
+        </div>
+
+        <div id="tab2" class="section">
+            <h3 class="list-title">مهام</h3>
+            <div id="social-tasks"></div>
+        </div>
+
+        <div id="tab3" class="section">
+            <h3 class="list-title">مهام أسبوعية</h3>
+            <div class="days-grid" id="days-container"></div>
+        </div>
+
+        <div id="tab4" class="section">
+            <h3 class="list-title">تصنيف الاحاله</h3>
+            <div id="ref-list"></div>
+        </div>
+
+        <div id="tab5" class="section">
+            <h3 class="list-title">تصنيف النقاط</h3>
+            <div id="pts-list"></div>
+        </div>
     </div>
 
     <nav class="nav-bar">
@@ -83,7 +107,6 @@
     </nav>
 
     <script>
-        // تكوين Firebase (استخدم بياناتك الحقيقية هنا)
         const firebaseConfig = {
             apiKey: "AIzaSyDt6tmNq_On6_wnCbQdqmiMcNkgZAxGZPo",
             databaseURL: "https://age-game-d193d-default-rtdb.firebaseio.com",
@@ -98,6 +121,8 @@
         let uid = params.get('id') || localStorage.getItem('age_uid') || "U"+Math.floor(Math.random()*9999);
         localStorage.setItem('age_uid', uid);
 
+        let userData = {};
+        let openedLinks = {};
         const socialTasks = [
             {id:'s1', n:'متابعة تويتر', u:'https://x.com/ktr_2008'},
             {id:'s2', n:'مجموعة تلغرام', u:'https://t.me/AGEGOLD'},
@@ -108,85 +133,98 @@
             {id:'s7', n:'دعوة صديق للقناة', u:'https://t.me/AGEGOLD'}
         ];
 
-        // تتبع النقرات المحلية لفتح الروابط
-        let openedLinks = {};
-
         db.ref('players/'+uid).on('value', (s) => {
-            const d = s.val() || {points:0};
-            document.getElementById('user-pts').innerText = (d.points || 0).toLocaleString();
-            document.getElementById('user-name').innerText = "@" + (d.username || username);
-            if(d.wallet) document.getElementById('wallet-header').style.display = 'none';
-            renderSocial(d.done || {});
+            userData = s.val() || {points:0, current_day:0, last_claim:0};
+            document.getElementById('user-pts').innerText = (userData.points || 0).toLocaleString();
+            document.getElementById('user-name').innerText = "@" + (userData.username || username);
+            if(userData.wallet) document.getElementById('wallet-header').style.display = 'none';
+            renderSocial(userData.done || {});
+            renderWeekly();
         });
 
+        // 🎯 نظام المهام مع الحماية
         function renderSocial(done) {
-            let html = '';
+            let h = '';
             socialTasks.forEach(t => {
                 const isD = done[t.id];
-                const isReady = openedLinks[t.id] ? 'ready' : '';
-                html += `
-                <div class="task-card">
+                const isR = openedLinks[t.id] ? 'ready' : '';
+                h += `<div class="task-card">
                     <span class="task-title">${t.n}</span>
                     <div class="task-btns">
-                        <button class="btn-act btn-go" onclick="openLink('${t.id}', '${t.u}')">فتح</button>
-                        <button id="v-${t.id}" class="btn-act ${isD ? 'btn-done' : 'btn-v ' + isReady}" 
-                                onclick="verifyTask('${t.id}', ${isD})">
-                                ${isD ? 'مكتمل ✅' : 'تحقق'}
-                        </button>
+                        <button class="btn-act btn-go" onclick="goLink('${t.id}','${t.u}')">فتح</button>
+                        <button id="v-${t.id}" class="btn-act ${isD?'btn-done':'btn-v '+isR}" onclick="verify('${t.id}',${isD})">${isD?'مكتمل ✅':'تحقق'}</button>
                     </div>
                 </div>`;
             });
-            document.getElementById('social-tasks').innerHTML = html;
+            document.getElementById('social-tasks').innerHTML = h;
         }
 
-        // وظيفة فتح الرابط وتفعيل زر التحقق
-        function openLink(id, url) {
-            window.open(url, '_blank');
-            openedLinks[id] = true; // تسجيل أن الرابط فُتح
-            const vBtn = document.getElementById('v-' + id);
-            if (vBtn && !vBtn.classList.contains('btn-done')) {
-                vBtn.classList.add('ready'); // تفعيل الزر بصرياً
+        function goLink(id, u) { window.open(u,'_blank'); openedLinks[id]=true; renderSocial(userData.done||{}); }
+
+        function verify(id, isD) {
+            if(isD || !openedLinks[id]) return alert("افتح الرابط أولاً!");
+            db.ref(`players/${uid}/points`).transaction(p=>(p||0)+50);
+            db.ref(`players/${uid}/done/${id}`).set(true);
+        }
+
+        // ⚡ نظام الـ 7 أيام المتسلسل
+        function renderWeekly() {
+            const container = document.getElementById('days-container');
+            container.innerHTML = '';
+            const now = Date.now();
+            const last = userData.last_claim || 0;
+            const current = userData.current_day || 0;
+            const isWait = (now - last) < 86400000;
+
+            for(let i=1; i<=7; i++) {
+                let status = 'closed'; let btnTxt = 'استلام'; let dis = true;
+                if(i <= current) { status='done'; btnTxt='مكتمل ✅'; }
+                else if(i === current + 1) {
+                    if(!isWait || current === 0) { status='open'; dis=false; }
+                    else { status='waiting'; btnTxt='بعد 24س'; }
+                }
+                container.innerHTML += `<div class="day-card ${status==='open'?'open':''}">
+                    <b>اليوم ${i}</b><br><small>+${i*25} نقطة</small>
+                    <button class="btn-claim" ${dis?'disabled':''} onclick="claimDay(${i})">${btnTxt}</button>
+                </div>`;
             }
         }
 
-        function verifyTask(id, isDone) {
-            if (isDone) return;
-            
-            // التحقق إذا كان اللاعب قد ضغط على "فتح" أولاً
-            if (!openedLinks[id]) {
-                alert("يرجى فتح الرابط أولاً قبل التحقق!");
-                return;
-            }
-
-            alert("جاري التحقق من إتمام المهمة...");
-            setTimeout(() => {
-                db.ref(`players/${uid}/points`).transaction(p => (p || 0) + 50);
-                db.ref(`players/${uid}/done/${id}`).set(true);
-                alert("مبروك! حصلت على 50 نقطة ✅");
-            }, 1000);
+        function claimDay(day) {
+            db.ref('players/'+uid).update({
+                points: (userData.points||0) + (day*25),
+                current_day: day,
+                last_claim: Date.now()
+            });
+            alert("تم استلام مكافأة اليوم " + day);
         }
 
-        // باقي الوظائف (تصنيفات، محفظة...)
+        // 🏆 التصنيفات
         function showTab(t, el) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             document.getElementById('tab'+t).classList.add('active');
             el.classList.add('active');
-            if(t===4 || t===5) loadLDR(t===4?'invites':'points', t===4?'ref-list':'pts-list', t===4?'إحالة':'نقطة');
+            if(t===4) loadLDR('invites', 'ref-list', 'إحالة');
+            if(t===5) loadLDR('points', 'pts-list', 'نقطة');
         }
 
-        function loadLDR(f, id, u) {
+        function loadLDR(f, id, unit) {
             db.ref('players').orderByChild(f).limitToLast(100).once('value', s => {
                 let arr = [];
-                s.forEach(c => { const d = c.val(); arr.push({n: d.username||c.key, v: d[f]||0}); });
-                arr.sort((a,b) => b.v - a.v);
-                document.getElementById(id).innerHTML = arr.map((p,i) => `<div class="rank-row"><div class="rank-info"><div class="rank-number">${i+1}</div>${p.n}</div><div class="rank-value">${p.v} ${u}</div></div>`).join('');
+                s.forEach(c => { const d=c.val(); arr.push({n:d.username||c.key, v:d[f]||0}); });
+                arr.sort((a,b)=>b.v - a.v);
+                document.getElementById(id).innerHTML = arr.map((p,i) => `
+                <div class="rank-row">
+                    <div class="rank-info"><div class="rank-number">${i+1}</div>${p.n}</div>
+                    <div style="color:var(--gold)">${p.v} ${unit}</div>
+                </div>`).join('');
             });
         }
-        
+
         async function bindWallet() {
             const a = document.getElementById('avax-addr').value.trim();
-            if(!/^0x[a-fA-F0-9]{40}$/.test(a)) return alert("خطأ في العنوان!");
+            if(!/^0x[a-fA-F0-9]{40}$/.test(a)) return alert("العنوان خطأ!");
             db.ref('players/'+uid).update({wallet:a, username:username});
         }
     </script>
