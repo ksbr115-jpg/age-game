@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة AGE - النسخة الاحترافية</title>
+    <title>لعبة AGE - النسخة الآمنة</title>
     <style>
         body { background-color: #000; color: #fff; text-align: center; font-family: sans-serif; direction: rtl; margin: 0; padding: 15px; touch-action: manipulation; }
-        
-        /* تصميم خانة المحفظة في أعلى اليمين */
         .wallet-header { position: absolute; top: 10px; right: 10px; z-index: 100; text-align: right; background: rgba(26, 26, 26, 0.9); padding: 8px; border-radius: 12px; border: 1px solid #f1c40f; width: 140px; }
         .wallet-header input { width: 90%; font-size: 10px; padding: 5px; border-radius: 5px; border: 1px solid #333; background: #000; color: #fff; margin-bottom: 5px; }
         .wallet-header button { width: 100%; font-size: 10px; background: #f1c40f; color: #000; border: none; padding: 4px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-
         .stat-box { background: linear-gradient(180deg, #1a1a1a, #000); padding: 25px 15px 15px 15px; border-radius: 20px; border: 2px solid #f1c40f; margin-top: 50px; margin-bottom: 15px; }
         .balance { font-size: 38px; color: #f1c40f; font-weight: bold; }
         .coin { font-size: 100px; margin: 15px 0; cursor: pointer; transition: 0.1s; display: inline-block; user-select: none; }
@@ -23,7 +20,7 @@
         .section.active { display: block; }
         .card { background: #1a1a1a; padding: 12px; border-radius: 15px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; text-align: right; }
         .btn-action { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 12px; }
-        .btn-done { background: #333 !important; color: #777 !important; cursor: not-allowed; }
+        .btn-done { background: #333 !important; color: #777 !important; cursor: not-allowed; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -47,7 +44,7 @@
     <div id="game" class="section active">
         <div class="coin" onclick="tap()">🪙</div>
         <div class="card">
-            <div><b>🎁 المكافأة اليومية</b><br><small>احصل على +1000 نقطة</small></div>
+            <div><b>🎁 المكافأة اليومية</b><br><small id="daily-status">احصل على +1000 نقطة</small></div>
             <button class="btn-action" id="daily-btn" onclick="claimDaily()">استلام</button>
         </div>
     </div>
@@ -55,19 +52,15 @@
     <div id="tasks" class="section">
         <div class="card">
             <div><b>🐦 متابعة تويتر</b><br><small>+1000 نقطة</small></div>
-            <button class="btn-action" onclick="runTask('https://x.com/ktr_2008', 1000, this)">تنفيذ</button>
+            <button class="btn-action" id="task_twitter" onclick="runTask('https://x.com/ktr_2008', 1000, 'task_twitter')">تنفيذ</button>
         </div>
         <div class="card">
             <div><b>📢 قناة التلغرام</b><br><small>+5000 نقطة</small></div>
-            <button class="btn-action" onclick="runTask('https://t.me/AgeGOLD', 5000, this)">انضمام</button>
+            <button class="btn-action" id="task_telegram" onclick="runTask('https://t.me/AgeGOLD', 5000, 'task_telegram')">انضمام</button>
         </div>
         <div class="card">
             <div><b>📺 قناة اليوتيوب</b><br><small>+5000 نقطة</small></div>
-            <button class="btn-action" onclick="runTask('https://www.youtube.com/@AGECOIN', 5000, this)">اشترك</button>
-        </div>
-        <div class="card">
-            <div><b>🌐 زيارة الموقع</b><br><small>+500 نقطة</small></div>
-            <button class="btn-action" onclick="runTask('https://ageiq.xyz/', 500, this)">زيارة</button>
+            <button class="btn-action" id="task_youtube" onclick="runTask('https://www.youtube.com/@AGECOIN', 5000, 'task_youtube')">اشترك</button>
         </div>
     </div>
 
@@ -87,6 +80,7 @@
             document.getElementById('age-equivalent').innerText = (score / 1000).toFixed(2) + " $AGE";
             document.getElementById('user-rank').innerText = score.toLocaleString();
             localStorage.setItem('age_points', score);
+            checkTasksStatus();
         }
 
         function tap() {
@@ -101,39 +95,64 @@
             el.classList.add('active');
         }
 
-        function runTask(url, pts, btn) {
+        function runTask(url, pts, taskId) {
+            if(localStorage.getItem(taskId)) return; // منع التنفيذ إذا كانت المهمة منتهية
+
             window.open(url, "_blank");
             setTimeout(() => {
                 score += pts;
-                btn.innerText = "تمت ✅";
-                btn.className = "btn-action btn-done";
-                btn.disabled = true;
+                localStorage.setItem(taskId, 'completed'); // تسجيل المهمة كمنتهية للأبد
                 updateUI();
+                alert("تهانينا! حصلت على النقاط.");
             }, 4000);
         }
 
         function claimDaily() {
+            const lastClaim = localStorage.getItem('last_daily_claim');
+            const now = new Date().getTime();
+            const oneDay = 24 * 60 * 60 * 1000;
+
+            if (lastClaim && (now - lastClaim < oneDay)) {
+                alert("لقد استلمت جائزتك اليوم! عد بعد 24 ساعة.");
+                return;
+            }
+
             score += 1000;
-            const btn = document.getElementById('daily-btn');
-            btn.disabled = true;
-            btn.innerText = "تمت ✅";
+            localStorage.setItem('last_daily_claim', now);
             updateUI();
+            alert("تم استلام 1000 نقطة بنجاح!");
+        }
+
+        function checkTasksStatus() {
+            // التحقق من حالة كل مهمة عند تشغيل التطبيق
+            const tasks = ['task_twitter', 'task_telegram', 'task_youtube'];
+            tasks.forEach(t => {
+                if(localStorage.getItem(t)) {
+                    const btn = document.getElementById(t);
+                    if(btn) {
+                        btn.innerText = "تمت ✅";
+                        btn.className = "btn-action btn-done";
+                        btn.disabled = true;
+                    }
+                }
+            });
+
+            // التحقق من المهمة اليومية
+            const lastClaim = localStorage.getItem('last_daily_claim');
+            const now = new Date().getTime();
+            if (lastClaim && (now - lastClaim < 24 * 60 * 60 * 1000)) {
+                const dailyBtn = document.getElementById('daily-btn');
+                dailyBtn.innerText = "عد غداً";
+                dailyBtn.className = "btn-action btn-done";
+                document.getElementById('daily-status').innerText = "المهمة القادمة متاحة غداً";
+            }
         }
 
         function saveWallet() {
             const addr = document.getElementById('wallet-addr').value;
-            if(addr.length < 5) {
-                alert("يرجى إدخال عنوان محفظة صحيح!");
-                return;
-            }
+            if(addr.length < 5) return;
             localStorage.setItem('user_wallet', addr);
-            alert("تم حفظ المحفظة بنجاح!");
-        }
-
-        function copyRef() {
-            const link = "https://t.me/AGEIQ_bot?start=ref" + Math.floor(Math.random()*1000);
-            navigator.clipboard.writeText(link);
-            alert("تم نسخ رابط الإحالة!");
+            alert("تم حفظ المحفظة!");
         }
 
         window.onload = function() {
