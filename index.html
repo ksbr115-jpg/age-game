@@ -3,75 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AGE Game - Tasks</title>
+    <title>AGE Game - Twitter Task</title>
     <style>
-        body { background-color: #000; color: #fff; text-align: center; font-family: sans-serif; direction: rtl; margin: 0; padding: 20px; }
-        .balance { font-size: 50px; color: #f1c40f; font-weight: bold; margin-top: 30px; }
-        .coin { font-size: 110px; margin: 20px 0; cursor: pointer; transition: transform 0.1s; display: inline-block; user-select: none; }
+        body { background-color: #000; color: #fff; text-align: center; font-family: sans-serif; direction: rtl; margin: 0; padding: 20px; touch-action: manipulation; }
+        .balance-container { background: linear-gradient(180deg, #1a1a1a 0%, #000 100%); padding: 20px; border-radius: 20px; border: 2px solid #f1c40f; margin-bottom: 20px; }
+        .balance { font-size: 50px; color: #f1c40f; font-weight: bold; }
+        .coin { font-size: 130px; margin: 30px 0; cursor: pointer; transition: transform 0.1s; display: inline-block; user-select: none; filter: drop-shadow(0 0 10px #f1c40f); }
         .coin:active { transform: scale(0.9); }
-        
-        /* تصميم قائمة المهام */
-        .task-list { margin-top: 20px; text-align: right; }
-        .task-item { background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .task-info span { display: block; font-size: 14px; color: #aaa; }
-        .btn-go { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .task-list { margin-top: 30px; }
+        .task-card { background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; text-align: right; }
+        .task-info b { display: block; color: #f1c40f; }
+        .task-info span { font-size: 12px; color: #aaa; }
+        .btn-action { background: #f1c40f; border: none; color: #000; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
         .btn-done { background: #333; color: #777; cursor: not-allowed; }
     </style>
 </head>
 <body>
-    <div class="balance" id="score">0</div>
+    <div class="balance-container">
+        <div>رصيدك الحالي</div>
+        <div class="balance" id="score">0</div>
+        <div style="color: #aaa;">$AGE Token</div>
+    </div>
+
     <div class="coin" onclick="tap()">🪙</div>
 
     <div class="task-list">
-        <h3>المهام المتاحة:</h3>
-        
-        <div class="task-item" id="twitter-task">
+        <div class="task-card">
             <div class="task-info">
-                <strong>متابعة على تويتر (X)</strong>
-                <span>احصل على +5000 $AGE</span>
+                <b>متابعة X (تويتر)</b>
+                <span>احصل على +5,000 $AGE</span>
             </div>
-            <button class="btn-go" id="tw-btn" onclick="doTwitterTask()">تنفيذ</button>
+            <button class="btn-action" id="tw-btn" onclick="goTwitter()">تنفيذ</button>
         </div>
     </div>
 
     <script>
         let score = localStorage.getItem('age_points') ? parseInt(localStorage.getItem('age_points')) : 0;
-        let twitterDone = localStorage.getItem('tw_task_done') === 'true';
+        let twDone = localStorage.getItem('tw_task') === 'true';
         
-        document.getElementById('score').innerText = score;
-        if(twitterDone) setTaskCompleted();
+        document.getElementById('score').innerText = score.toLocaleString();
+        if(twDone) updateBtn();
 
         function tap() {
             score += 1;
             updateUI();
         }
 
-        function doTwitterTask() {
-            // فتح رابط تويتر الخاص بك
+        function goTwitter() {
             window.open("https://x.com/ktr_2008", "_blank");
-            
-            // إضافة النقاط بعد 5 ثواني (محاكاة للتحقق)
             setTimeout(() => {
-                if(!twitterDone) {
+                if(!twDone) {
                     score += 5000;
-                    twitterDone = true;
-                    localStorage.setItem('tw_task_done', 'true');
+                    twDone = true;
+                    localStorage.setItem('tw_task', 'true');
                     updateUI();
-                    setTaskCompleted();
-                    alert("مبروك! حصلت على 5000 عملة لمتابعة تويتر");
+                    updateBtn();
+                    alert("تهانينا! تمت إضافة 5,000 عملة لرصيدك.");
                 }
-            }, 2000);
+            }, 3000);
         }
 
-        function setTaskCompleted() {
+        function updateBtn() {
             const btn = document.getElementById('tw-btn');
-            btn.innerText = "تمت";
-            btn.className = "btn-go btn-done";
+            btn.innerText = "تمت ✅";
+            btn.className = "btn-action btn-done";
             btn.disabled = true;
         }
 
         function updateUI() {
-            document.getElementById('score').innerText = score;
+            document.getElementById('score').innerText = score.toLocaleString();
             localStorage.setItem('age_points', score);
         }
     </script>
