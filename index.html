@@ -2,100 +2,88 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AGE Game - Phase 2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AGE Game - Secure Edition</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        :root { --gold: #f1c40f; --bg: #0b0b0b; --card: #161616; }
-        body { background-color: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        :root { --gold: #f1c40f; --bg: #000; --card: #111; --gray: #555; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
         
-        /* المحفظة أعلى اليمين */
-        #wallet-area { position: fixed; top: 10px; right: 10px; z-index: 1000; }
-        .wallet-box { background: var(--card); border: 1px solid var(--gold); padding: 5px; border-radius: 10px; display: flex; gap: 5px; align-items: center; }
-        .wallet-box input { background: #000; border: 1px solid #333; color: var(--gold); font-size: 10px; padding: 5px; border-radius: 5px; outline: none; }
-        
-        /* الواجهة الرئيسية */
-        .container { padding: 70px 15px 80px; text-align: center; }
-        .score-display { font-size: 45px; font-weight: bold; color: var(--gold); margin-bottom: 5px; }
-        
-        /* التبويبات (4 أعمدة) */
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; border-top: 1px solid #333; height: 65px; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #777; cursor: pointer; }
-        .nav-item.active { color: var(--gold); border-top: 2px solid var(--gold); }
+        /* المحفظة */
+        #wallet-header { position: fixed; top: 10px; right: 10px; z-index: 2000; }
+        .wallet-box { background: #1a1a1a; padding: 5px; border-radius: 10px; border: 1px solid var(--gold); display: flex; gap: 5px; }
+        .wallet-box input { background: #000; border: 1px solid #333; color: var(--gold); font-size: 10px; padding: 5px; width: 100px; border-radius: 5px; outline: none; }
+        .btn-link { background: var(--gold); border: none; padding: 5px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 10px; }
 
-        .section { display: none; animation: slideUp 0.3s ease; }
+        /* الحاوية الرئيسية */
+        .container { padding: 70px 15px 100px; text-align: center; }
+        .hero { background: linear-gradient(180deg, #151515, #000); border: 1px solid #222; border-radius: 20px; padding: 30px 15px; margin-bottom: 20px; }
+        .hero h1 { font-size: 50px; color: var(--gold); margin: 0; }
+        
+        .section { display: none; animation: fadeIn 0.3s; }
         .section.active { display: block; }
 
-        /* الكروت والمهام */
-        .card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 12px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-        .task-detail { text-align: right; }
-        .task-detail b { display: block; font-size: 14px; margin-bottom: 4px; }
-        .task-detail span { color: var(--gold); font-size: 12px; }
+        /* كروت المهام */
+        .task-card { background: var(--card); border: 1px solid #222; border-radius: 15px; padding: 15px; margin-bottom: 12px; text-align: right; }
+        .task-title { font-weight: bold; font-size: 15px; display: block; margin-bottom: 5px; }
+        .task-reward { color: var(--gold); font-size: 12px; }
+        .task-btns { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-act { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
         
-        .btn-group { display: flex; gap: 5px; }
-        .btn { border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; }
         .btn-go { background: #fff; color: #000; }
-        .btn-verify { background: var(--gold); color: #000; }
-        .btn-done { background: #222; color: #555; cursor: default; }
+        /* زر التحقق المعطل */
+        .btn-v { background: var(--gray); color: #888; cursor: not-allowed; transition: 0.3s; }
+        /* زر التحقق المفعل */
+        .btn-v.ready { background: var(--gold); color: #000; cursor: pointer; }
+        .btn-done { background: #222 !important; color: #555 !important; cursor: default; }
 
-        /* قائمة التصنيف */
-        .rank-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; font-size: 14px; }
-        .rank-no { color: var(--gold); width: 30px; text-align: center; }
+        /* التصنيفات */
+        .list-title { color: var(--gold); border-right: 4px solid var(--gold); padding-right: 12px; text-align: right; margin: 25px 0 15px; font-size: 18px; }
+        .rank-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #0d0d0d; border-bottom: 1px solid #1a1a1a; margin-bottom: 4px; border-radius: 8px; }
+        .rank-info { display: flex; align-items: center; gap: 12px; }
+        .rank-number { background: var(--gold); color: #000; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 12px; }
 
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        /* المنيو السفلي */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: #080808; border-top: 1px solid #222; display: flex; height: 75px; z-index: 1000; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #555; border: none; background: none; gap: 5px; }
+        .nav-item.active { color: var(--gold); border-top: 2px solid var(--gold); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div id="wallet-area">
-        <div class="wallet-box" id="wallet-ui">
-            <input type="text" id="avax-input" placeholder="عنوان AVAX (0x...)">
-            <button class="btn btn-verify" onclick="bindWallet()">ربط</button>
+    <div id="wallet-header">
+        <div class="wallet-box">
+            <input type="text" id="avax-addr" placeholder="AVAX 0x...">
+            <button class="btn-link" onclick="bindWallet()">ربط</button>
         </div>
     </div>
 
     <div class="container">
-        <div class="score-display" id="total-score">0</div>
-        <div style="color: #666; margin-bottom: 25px;">إجمالي نقاط AGE</div>
-
-        <div id="col1" class="section active">
-            <h3 style="text-align: right; color: var(--gold);">⚡ المهمة الأسبوعية الذكية</h3>
-            <div class="card">
-                <div class="task-detail">
-                    <b>مكافأة الدورة الأسبوعية</b>
-                    <span id="weekly-timer">متاحة الآن (+25 نقطة)</span>
-                </div>
-                <button class="btn btn-verify" id="weekly-btn" onclick="doWeekly()">استلام اليوم</button>
-            </div>
-            <p style="font-size: 11px; color: #555; text-align: right;">* تحصل على 25 نقطة كل 24 ساعة، وتتصفر الدورة كل 7 أيام.</p>
+        <div class="hero">
+            <h1 id="user-pts">0</h1>
+            <p id="user-name" style="color:#888;">جاري التحميل...</p>
         </div>
 
-        <div id="col2" class="section">
-            <h3 style="text-align: right;">📋 المهام الاجتماعية (+50 لكل مهمة)</h3>
-            <div id="multi-tasks"></div>
-        </div>
-
-        <div id="col3" class="section">
-            <h3 style="color: var(--gold);">🏆 أفضل 100 لاعب</h3>
-            <div id="score-leaderboard"></div>
-        </div>
-
-        <div id="col4" class="section">
-            <h3 style="color: #3498db;">🔗 أبطال الإحالة</h3>
-            <div id="ref-leaderboard"></div>
-        </div>
+        <div id="tab1" class="section active"><h3>الرئيسية</h3><p>أهلاً بك في AGE GOLD.</p></div>
+        <div id="tab2" class="section"><h3 class="list-title">مهام</h3><div id="social-tasks"></div></div>
+        <div id="tab3" class="section"><h3 class="list-title">مهام أسبوعية</h3><div class="task-card"><span class="task-title">المكافأة اليومية</span><button class="btn-act btn-v ready" id="week-btn" onclick="claimWeek()">استلام</button></div></div>
+        <div id="tab4" class="section"><h3 class="list-title">تصنيف الاحاله</h3><div id="ref-list"></div></div>
+        <div id="tab5" class="section"><h3 class="list-title">تصنيف النقاط</h3><div id="pts-list"></div></div>
     </div>
 
     <nav class="nav-bar">
-        <div class="nav-item active" onclick="showCol(1, this)">🏠 الرئيسية</div>
-        <div class="nav-item" onclick="showCol(2, this)">🎯 المهام</div>
-        <div class="nav-item" onclick="showCol(3, this)">🏆 النقاط</div>
-        <div class="nav-item" onclick="showCol(4, this)">👥 الإحالات</div>
+        <button class="nav-item active" onclick="showTab(1, this)">🏠<br>رئيسية</button>
+        <button class="nav-item" onclick="showTab(2, this)">🎯<br>مهام</button>
+        <button class="nav-item" onclick="showTab(3, this)">⚡<br>أسبوعية</button>
+        <button class="nav-item" onclick="showTab(4, this)">🔗<br>الإحالة</button>
+        <button class="nav-item" onclick="showTab(5, this)">🏆<br>النقاط</button>
     </nav>
 
     <script>
-        // تكوين Firebase
+        // تكوين Firebase (استخدم بياناتك الحقيقية هنا)
         const firebaseConfig = {
             apiKey: "AIzaSyDt6tmNq_On6_wnCbQdqmiMcNkgZAxGZPo",
             databaseURL: "https://age-game-d193d-default-rtdb.firebaseio.com",
@@ -105,130 +93,101 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // بيانات المستخدم
-        const urlParams = new URLSearchParams(window.location.search);
-        let uid = urlParams.get('id') || localStorage.getItem('age_uid') || 'Guest' + Math.floor(Math.random() * 1000);
+        const params = new URLSearchParams(window.location.search);
+        let username = params.get('user') || "لاعب_جديد";
+        let uid = params.get('id') || localStorage.getItem('age_uid') || "U"+Math.floor(Math.random()*9999);
         localStorage.setItem('age_uid', uid);
 
-        let userPoints = 0;
-
-        // مصفوفة المهام المتعددة
-        const tasksList = [
-            { id: 't1', name: 'متابعة تويتر', url: 'https://x.com/ktr_2008' },
-            { id: 't2', name: 'انضمام تلغرام', url: 'https://t.me/AGEGOLD' },
-            { id: 't3', name: 'إعجاب بآخر منشور', url: 'https://x.com/ktr_2008' },
-            { id: 't4', name: 'إعادة نشر (Retweet)', url: 'https://x.com/ktr_2008' },
-            { id: 't5', name: 'رسالة في المجموعة', url: 'https://t.me/AGEGOLD' },
-            { id: 't6', name: 'اشتراك يوتيوب', url: 'https://www.youtube.com/@AGECOIN' },
-            { id: 't7', name: 'دعوة صديق للقناة', url: 'https://t.me/AGEGOLD' }
+        const socialTasks = [
+            {id:'s1', n:'متابعة تويتر', u:'https://x.com/ktr_2008'},
+            {id:'s2', n:'مجموعة تلغرام', u:'https://t.me/AGEGOLD'},
+            {id:'s3', n:'إعجاب بآخر منشور', u:'https://x.com/ktr_2008'},
+            {id:'s4', n:'إعادة نشر التغريدة', u:'https://x.com/ktr_2008'},
+            {id:'s5', n:'رسالة في المجموعة', u:'https://t.me/AGEGOLD'},
+            {id:'s6', n:'اشتراك يوتيوب', u:'https://www.youtube.com/@AGECOIN'},
+            {id:'s7', n:'دعوة صديق للقناة', u:'https://t.me/AGEGOLD'}
         ];
 
-        // التحميل الأولي والمزامنة
-        db.ref('players/' + uid).on('value', (snap) => {
-            const data = snap.val() || {};
-            userPoints = data.points || 0;
-            document.getElementById('total-score').innerText = userPoints.toLocaleString();
-            
-            // إخفاء المحفظة إذا ربطها
-            if(data.wallet) {
-                document.getElementById('wallet-area').style.display = 'none';
-            }
+        // تتبع النقرات المحلية لفتح الروابط
+        let openedLinks = {};
 
-            renderMultiTasks(data.completed || {});
-            checkWeeklyStatus(data.weekly_last_claim || 0);
+        db.ref('players/'+uid).on('value', (s) => {
+            const d = s.val() || {points:0};
+            document.getElementById('user-pts').innerText = (d.points || 0).toLocaleString();
+            document.getElementById('user-name').innerText = "@" + (d.username || username);
+            if(d.wallet) document.getElementById('wallet-header').style.display = 'none';
+            renderSocial(d.done || {});
         });
 
-        // ربط المحفظة AVAX
-        async function bindWallet() {
-            const addr = document.getElementById('avax-input').value.trim();
-            if(/^0x[a-fA-F0-9]{40}$/.test(addr)) {
-                const check = await db.ref('players').orderByChild('wallet').equalTo(addr).once('value');
-                if(check.exists()) return alert("المحفظة مستخدمة مسبقاً!");
-                db.ref('players/' + uid).update({ wallet: addr });
-                alert("تم الربط بنجاح ✅");
-            } else { alert("عنوان AVAX غير صحيح"); }
-        }
-
-        // المهمة الأسبوعية (كل 24 ساعة لمدة أسبوع)
-        function checkWeeklyStatus(lastClaim) {
-            const now = Date.now();
-            const dayInMs = 24 * 60 * 60 * 1000;
-            const btn = document.getElementById('weekly-btn');
-            const timer = document.getElementById('weekly-timer');
-
-            if (now - lastClaim < dayInMs) {
-                btn.disabled = true;
-                btn.innerText = "انتظر 24 ساعة";
-                btn.className = "btn btn-done";
-                timer.innerText = "ستتوفر المهمة القادمة غداً";
-            } else {
-                btn.disabled = false;
-                btn.innerText = "استلام 25 نقطة";
-                btn.className = "btn btn-verify";
-                timer.innerText = "متاحة الآن (+25 نقطة)";
-            }
-        }
-
-        function doWeekly() {
-            db.ref('players/' + uid).update({
-                points: userPoints + 25,
-                weekly_last_claim: Date.now()
-            });
-            alert("تم استلام مكافأة اليوم ✅");
-        }
-
-        // عرض المهام المتعددة (زرين: استلام وتحقق)
-        function renderMultiTasks(completed) {
+        function renderSocial(done) {
             let html = '';
-            tasksList.forEach(t => {
-                const isDone = completed[t.id];
+            socialTasks.forEach(t => {
+                const isD = done[t.id];
+                const isReady = openedLinks[t.id] ? 'ready' : '';
                 html += `
-                <div class="card">
-                    <div class="task-detail"><b>${t.name}</b><span>+50 نقطة</span></div>
-                    <div class="btn-group">
-                        <button class="btn btn-go" onclick="window.open('${t.url}')">فتح</button>
-                        <button class="btn ${isDone ? 'btn-done' : 'btn-verify'}" 
-                                onclick="${isDone ? '' : `verifyTask('${t.id}')`}">
-                                ${isDone ? 'مكتمل ✅' : 'تحقق'}
+                <div class="task-card">
+                    <span class="task-title">${t.n}</span>
+                    <div class="task-btns">
+                        <button class="btn-act btn-go" onclick="openLink('${t.id}', '${t.u}')">فتح</button>
+                        <button id="v-${t.id}" class="btn-act ${isD ? 'btn-done' : 'btn-v ' + isReady}" 
+                                onclick="verifyTask('${t.id}', ${isD})">
+                                ${isD ? 'مكتمل ✅' : 'تحقق'}
                         </button>
                     </div>
                 </div>`;
             });
-            document.getElementById('multi-tasks').innerHTML = html;
+            document.getElementById('social-tasks').innerHTML = html;
         }
 
-        function verifyTask(taskId) {
-            alert("جاري التحقق...");
+        // وظيفة فتح الرابط وتفعيل زر التحقق
+        function openLink(id, url) {
+            window.open(url, '_blank');
+            openedLinks[id] = true; // تسجيل أن الرابط فُتح
+            const vBtn = document.getElementById('v-' + id);
+            if (vBtn && !vBtn.classList.contains('btn-done')) {
+                vBtn.classList.add('ready'); // تفعيل الزر بصرياً
+            }
+        }
+
+        function verifyTask(id, isDone) {
+            if (isDone) return;
+            
+            // التحقق إذا كان اللاعب قد ضغط على "فتح" أولاً
+            if (!openedLinks[id]) {
+                alert("يرجى فتح الرابط أولاً قبل التحقق!");
+                return;
+            }
+
+            alert("جاري التحقق من إتمام المهمة...");
             setTimeout(() => {
                 db.ref(`players/${uid}/points`).transaction(p => (p || 0) + 50);
-                db.ref(`players/${uid}/completed/${taskId}`).set(true);
-            }, 2000);
+                db.ref(`players/${uid}/done/${id}`).set(true);
+                alert("مبروك! حصلت على 50 نقطة ✅");
+            }, 1000);
         }
 
-        // التبديل بين التبويبات (الأعمدة الأربعة)
-        function showCol(num, el) {
+        // باقي الوظائف (تصنيفات، محفظة...)
+        function showTab(t, el) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('col' + num).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById('tab'+t).classList.add('active');
             el.classList.add('active');
-            if(num === 3) loadLeaderboard('points', 'score-leaderboard', 'نقطة');
-            if(num === 4) loadLeaderboard('invites', 'ref-leaderboard', 'إحالة');
+            if(t===4 || t===5) loadLDR(t===4?'invites':'points', t===4?'ref-list':'pts-list', t===4?'إحالة':'نقطة');
         }
 
-        // جلب التصنيفات (100 شخص)
-        function loadLeaderboard(field, containerId, unit) {
-            db.ref('players').orderByChild(field).limitToLast(100).once('value', (snap) => {
-                let html = '';
-                let players = [];
-                snap.forEach(c => { players.push({id: c.key, val: c.val()[field] || 0}); });
-                players.reverse().forEach((p, i) => {
-                    html += `<div class="rank-item">
-                        <div><span class="rank-no">#${i+1}</span> ${p.id}</div>
-                        <b>${p.val} ${unit}</b>
-                    </div>`;
-                });
-                document.getElementById(containerId).innerHTML = html;
+        function loadLDR(f, id, u) {
+            db.ref('players').orderByChild(f).limitToLast(100).once('value', s => {
+                let arr = [];
+                s.forEach(c => { const d = c.val(); arr.push({n: d.username||c.key, v: d[f]||0}); });
+                arr.sort((a,b) => b.v - a.v);
+                document.getElementById(id).innerHTML = arr.map((p,i) => `<div class="rank-row"><div class="rank-info"><div class="rank-number">${i+1}</div>${p.n}</div><div class="rank-value">${p.v} ${u}</div></div>`).join('');
             });
+        }
+        
+        async function bindWallet() {
+            const a = document.getElementById('avax-addr').value.trim();
+            if(!/^0x[a-fA-F0-9]{40}$/.test(a)) return alert("خطأ في العنوان!");
+            db.ref('players/'+uid).update({wallet:a, username:username});
         }
     </script>
 </body>
