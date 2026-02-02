@@ -1,182 +1,167 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AGE Game - Ultimate Edition</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    
-    <style>
-        body { background-color: #000; color: #fff; text-align: center; font-family: sans-serif; direction: rtl; margin: 0; padding: 15px; touch-action: manipulation; }
-        .wallet-header { position: absolute; top: 10px; right: 10px; z-index: 100; background: rgba(26,26,26,0.9); padding: 8px; border-radius: 12px; border: 1px solid #f1c40f; width: 140px; }
-        .wallet-header input { width: 90%; font-size: 10px; padding: 5px; background: #000; color: #fff; border: 1px solid #333; margin-bottom: 5px; outline: none; transition: 0.3s; }
-        .wallet-header button { width: 100%; font-size: 10px; background: #f1c40f; color: #000; border: none; padding: 4px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .stat-box { background: linear-gradient(180deg, #1a1a1a, #000); padding: 30px 15px 15px; border-radius: 20px; border: 2px solid #f1c40f; margin-top: 65px; margin-bottom: 15px; }
-        .balance { font-size: 38px; color: #f1c40f; font-weight: bold; }
-        .coin { font-size: 100px; margin: 20px 0; cursor: pointer; display: inline-block; user-select: none; transition: 0.1s; }
-        .coin:active { transform: scale(0.9); }
-        .tabs { display: flex; justify-content: space-around; background: #111; border-radius: 12px; padding: 5px; margin-bottom: 15px; }
-        .tab { cursor: pointer; padding: 10px; font-size: 14px; flex: 1; border-radius: 10px; }
-        .tab.active { background: #f1c40f; color: #000; font-weight: bold; }
-        .section { display: none; }
-        .section.active { display: block; }
-        .card { background: #1a1a1a; padding: 12px; border-radius: 15px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; text-align: right; }
-        .btn-action { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-done { background: #333 !important; color: #777 !important; cursor: not-allowed; pointer-events: none; }
-    </style>
-</head>
-<body>
+const TelegramBot = require("node-telegram-bot-api");
+const fs = require("fs");
+const config = require("./config");
 
-    <div class="wallet-header">
-        <input type="text" id="wallet-addr" placeholder="عنوان Avalanche C-Chain...">
-        <button id="save-btn" onclick="saveWallet()">حفظ المحفظة 💰</button>
-    </div>
+const bot = new TelegramBot(config.BOT_TOKEN, { polling: true });
+let db = JSON.parse(fs.readFileSync("database.json"));
 
-    <div class="stat-box">
-        <div class="balance" id="score">0</div>
-        <div style="color: #aaa; font-size: 14px;" id="age-equivalent">0 $AGE</div>
-    </div>
+function saveDB() {
+  fs.writeFileSync("database.json", JSON.stringify(db, null, 2));
+}
 
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('game', this)">الرئيسية</div>
-        <div class="tab" onclick="switchTab('tasks', this)">المهام</div>
-        <div class="tab" onclick="switchTab('rank', this)">التصنيف</div>
-    </div>
+// تحقق الاشتراك بقناة تيليجرام
+async function checkTelegramJoin(userId) {
+  try {
+    const member = await bot.getChatMember(config.TELEGRAM_CHANNEL, userId);
+    return ["member", "administrator", "creator"].includes(member.status);
+  } catch {
+    return false;
+  }
+}
 
-    <div id="game" class="section active">
-        <div class="coin" onclick="tap()">🪙</div>
-        <div class="card">
-            <div><b>🎁 المكافأة اليومية</b><br><small id="daily-status">احصل على +1000 نقطة</small></div>
-            <button class="btn-action" id="daily-btn" onclick="claimDaily()">استلام</button>
-        </div>
-    </div>
+// /start
+bot.onText(/\/start/, (msg) => {
+  const id = msg.from.id;
 
-    <div id="tasks" class="section">
-        <div class="card"><div><b>🐦 متابعة تويتر</b><br><small>+1000</small></div><button class="btn-action" id="t_tw" onclick="runTask('https://x.com/ktr_2008', 1000, 't_tw')">تنفيذ</button></div>
-        <div class="card"><div><b>📢 قناة تلغرام</b><br><small>+5000</small></div><button class="btn-action" id="t_tg" onclick="runTask('https://t.me/AgeGOLD', 5000, 't_tg')">انضمام</button></div>
-        <div class="card"><div><b>🌐 زيارة الموقع</b><br><small>+500</small></div><button class="btn-action" id="t_web" onclick="runTask('https://ageiq.xyz/', 500, 't_web')">زيارة</button></div>
-    </div>
+  if (!db.users[id]) {
+    db.users[id] = {
+      points: 0,
+      tasks: {
+        telegram: false,
+        twitter: false,
+        youtube: false
+      }
+    };
+    saveDB();
+  }
 
-    <div id="rank" class="section">
-        <h3>المتصدرين 🏆</h3>
-        <div id="leaderboard"><div class="card"><span>أنت</span> <b style="color:#f1c40f" id="user-rank">0</b></div></div>
-    </div>
+  bot.sendMessage(
+    id,
+    "🏛️ مرحباً بك في *AGE Airdrop Game*\n\nنفّذ المهام، اجمع نقاط، واحصل على توكنات AGE 🎖️",
+    {
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "📋 المهام", callback_data: "tasks" }],
+          [{ text: "⭐ نقاطي", callback_data: "points" }],
+          [{ text: "🏆 الترتيب", callback_data: "leaderboard" }]
+        ]
+      }
+    }
+  );
+});
 
-    <script>
-        // إعدادات Firebase الخاصة بك مدمجة من صورتك الأخيرة
-        const firebaseConfig = {
-            apiKey: "AIzaSyDt6tmNq_On6_wnCbQdqmiMcNkgZAxGZPo",
-            databaseURL: "https://age-game-d193d-default-rtdb.firebaseio.com",
-            projectId: "age-game-d193d",
-            appId: "1:1086396979239:web:6652b5bebee7f5126c1602"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+// الأزرار
+bot.on("callback_query", async (q) => {
+  const id = q.from.id;
+  const user = db.users[id];
+  if (!user) return;
 
-        let uid = localStorage.getItem('age_uid') || 'U' + Math.floor(Math.random() * 900000);
-        localStorage.setItem('age_uid', uid);
+  // عرض المهام
+  if (q.data === "tasks") {
+    bot.sendMessage(id, "📌 مهام AGE المتاحة:", {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "📢 اشترك بقناة تيليجرام (+20)", url: "https://t.me/AGEGOLD" },
+            { text: "✅ تحقق", callback_data: "task_telegram" }
+          ],
+          [
+            { text: "🐦 تابعنا على X (+30)", url: "https://x.com/ktr_2008" },
+            { text: "✅ تحقق", callback_data: "task_twitter" }
+          ],
+          [
+            { text: "📺 اشترك YouTube (+30)", url: "https://www.youtube.com/@AGECOIN" },
+            { text: "✅ تحقق", callback_data: "task_youtube" }
+          ]
+        ]
+      }
+    });
+  }
 
-        let score = 0;
-        let wallet = '';
+  // نقاطي
+  if (q.data === "points") {
+    bot.sendMessage(id, `⭐ نقاطك الحالية: *${user.points}*`, {
+      parse_mode: "Markdown"
+    });
+  }
 
-        // المزامنة مع السيرفر
-        db.ref('players/' + uid).on('value', (s) => {
-            const d = s.val();
-            if(d) { 
-                score = d.points || 0; 
-                wallet = d.wallet || ''; 
-                updateUI(); 
-            }
-        });
+  // الترتيب
+  if (q.data === "leaderboard") {
+    const top = Object.entries(db.users)
+      .sort((a, b) => b[1].points - a[1].points)
+      .slice(0, 10);
 
-        function sync() { 
-            db.ref('players/' + uid).update({ 
-                points: score, 
-                wallet: wallet,
-                lastSeen: firebase.database.ServerValue.TIMESTAMP 
-            }); 
-        }
+    let text = "🏆 *أفضل 10 لاعبين:*\n\n";
+    top.forEach((u, i) => {
+      text += `${i + 1}. ID: ${u[0]} — ${u[1].points} نقطة\n`;
+    });
 
-        function updateUI() {
-            document.getElementById('score').innerText = score.toLocaleString();
-            document.getElementById('age-equivalent').innerText = (score / 1000).toFixed(2) + " $AGE";
-            document.getElementById('user-rank').innerText = score.toLocaleString();
-            
-            if(wallet) {
-                const wInput = document.getElementById('wallet-addr');
-                wInput.value = wallet;
-                wInput.style.borderColor = "#2ecc71";
-                document.getElementById('save-btn').innerText = "تم الحفظ ✅";
-                document.getElementById('save-btn').classList.add('btn-done');
-            }
+    bot.sendMessage(id, text, { parse_mode: "Markdown" });
+  }
 
-            ['t_tw', 't_tg', 't_web'].forEach(id => {
-                if(localStorage.getItem(id)) {
-                    const b = document.getElementById(id);
-                    if(b) { b.innerText = "تمت ✅"; b.className = "btn-action btn-done"; }
-                }
-            });
+  // مهمة تيليجرام (تحقق حقيقي)
+  if (q.data === "task_telegram") {
+    if (user.tasks.telegram) {
+      return bot.answerCallbackQuery(q.id, {
+        text: "❌ هذه المهمة مكتملة مسبقاً",
+        show_alert: true
+      });
+    }
 
-            // تحديث حالة المكافأة اليومية
-            const last = localStorage.getItem('daily');
-            if(last && (new Date().getTime() - last < 86400000)) {
-                const dBtn = document.getElementById('daily-btn');
-                dBtn.innerText = "تم الاستلام";
-                dBtn.classList.add('btn-done');
-            }
-        }
+    const joined = await checkTelegramJoin(id);
+    if (!joined) {
+      return bot.answerCallbackQuery(q.id, {
+        text: "⚠️ لازم تشترك بالقناة أولاً",
+        show_alert: true
+      });
+    }
 
-        function tap() { score += 1; updateUI(); sync(); }
+    user.tasks.telegram = true;
+    user.points += 20;
+    saveDB();
 
-        function saveWallet() {
-            const wInput = document.getElementById('wallet-addr');
-            const addr = wInput.value.trim();
-            // التحقق من صحة عنوان Avalanche C-Chain
-            const isValidAvax = /^0x[a-fA-F0-9]{40}$/.test(addr);
+    return bot.answerCallbackQuery(q.id, {
+      text: "✅ تم التحقق +20 نقطة",
+      show_alert: true
+    });
+  }
 
-            if (isValidAvax) {
-                wallet = addr;
-                sync();
-                alert("تم التحقق وحفظ المحفظة بنجاح ✅");
-                updateUI();
-            } else {
-                alert("خطأ: يرجى إدخال عنوان Avalanche صحيح يبدأ بـ 0x");
-                wInput.style.borderColor = "#e74c3c";
-            }
-        }
-        
-        function runTask(url, pts, id) {
-            if(localStorage.getItem(id)) return;
-            window.open(url, "_blank");
-            setTimeout(() => { 
-                score += pts; 
-                localStorage.setItem(id, 'done'); 
-                updateUI(); 
-                sync(); 
-            }, 4000);
-        }
+  // مهمة X
+  if (q.data === "task_twitter") {
+    if (user.tasks.twitter) {
+      return bot.answerCallbackQuery(q.id, {
+        text: "❌ هذه المهمة مكتملة مسبقاً",
+        show_alert: true
+      });
+    }
 
-        function claimDaily() {
-            const last = localStorage.getItem('daily');
-            const now = new Date().getTime();
-            if(last && (now - last < 86400000)) { 
-                alert("المكافأة القادمة بعد 24 ساعة!"); 
-                return; 
-            }
-            score += 1000; 
-            localStorage.setItem('daily', now); 
-            updateUI(); 
-            sync();
-        }
+    user.tasks.twitter = true;
+    user.points += 30;
+    saveDB();
 
-        function switchTab(id, el) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(id).classList.add('active'); el.classList.add('active');
-        }
+    return bot.answerCallbackQuery(q.id, {
+      text: "✅ تم تسجيل المتابعة +30 نقطة",
+      show_alert: true
+    });
+  }
 
-        updateUI();
-    </script>
-</body>
-</html>
+  // مهمة YouTube
+  if (q.data === "task_youtube") {
+    if (user.tasks.youtube) {
+      return bot.answerCallbackQuery(q.id, {
+        text: "❌ هذه المهمة مكتملة مسبقاً",
+        show_alert: true
+      });
+    }
+
+    user.tasks.youtube = true;
+    user.points += 30;
+    saveDB();
+
+    return bot.answerCallbackQuery(q.id, {
+      text: "✅ تم تسجيل الاشتراك +30 نقطة",
+      show_alert: true
+    });
+  }
+});
