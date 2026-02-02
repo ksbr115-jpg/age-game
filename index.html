@@ -3,62 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AGE Game - Tasks Edition</title>
+    <title>AGE Game - Professional System</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    
     <style>
-        body { background-color: #000; color: #fff; text-align: center; font-family: sans-serif; margin: 0; padding: 15px; touch-action: manipulation; }
-        .wallet-header { background: rgba(26,26,26,0.9); padding: 15px; border-radius: 15px; border: 1px solid #f1c40f; margin-bottom: 15px; }
-        .wallet-header input { width: 80%; padding: 10px; background: #000; color: #fff; border: 1px solid #333; border-radius: 8px; margin-bottom: 10px; outline: none; }
-        .wallet-header button { width: 85%; background: #f1c40f; color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .stat-box { background: linear-gradient(180deg, #1a1a1a, #000); padding: 25px; border-radius: 20px; border: 2px solid #f1c40f; margin-bottom: 15px; }
+        body { background-color: #000; color: #fff; text-align: center; font-family: sans-serif; margin: 0; padding: 10px; }
+        
+        /* تصميم المحفظة أعلى اليمين */
+        .wallet-section { position: fixed; top: 10px; right: 10px; z-index: 1000; background: #1a1a1a; padding: 10px; border-radius: 12px; border: 1px solid #f1c40f; width: 150px; }
+        .wallet-section input { width: 90%; font-size: 10px; padding: 5px; background: #000; color: #fff; border: 1px solid #333; margin-bottom: 5px; border-radius: 5px; }
+        .wallet-section button { width: 100%; font-size: 10px; background: #f1c40f; color: #000; border: none; padding: 5px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+
+        .stat-box { background: linear-gradient(180deg, #1a1a1a, #000); padding: 30px 15px; border-radius: 20px; border: 2px solid #f1c40f; margin: 80px 10px 20px; }
         .balance { font-size: 40px; color: #f1c40f; font-weight: bold; }
-        .coin { font-size: 100px; margin: 20px 0; cursor: pointer; display: inline-block; user-select: none; transition: 0.1s; -webkit-tap-highlight-color: transparent; }
-        .coin:active { transform: scale(0.9); }
-        .tabs { display: flex; justify-content: space-around; background: #111; border-radius: 12px; padding: 5px; margin-bottom: 15px; }
-        .tab { cursor: pointer; padding: 10px; font-size: 14px; flex: 1; border-radius: 10px; color: #888; }
+        
+        .tabs { display: flex; background: #111; border-radius: 12px; padding: 5px; margin: 10px; }
+        .tab { flex: 1; padding: 10px; cursor: pointer; border-radius: 10px; color: #888; font-size: 13px; }
         .tab.active { background: #f1c40f; color: #000; font-weight: bold; }
-        .section { display: none; }
+        
+        .section { display: none; padding: 10px; }
         .section.active { display: block; }
-        .task-group-title { text-align: right; color: #f1c40f; margin: 15px 5px 10px; font-size: 16px; border-right: 3px solid #f1c40f; padding-right: 10px; }
-        .card { background: #1a1a1a; padding: 12px; border-radius: 15px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; text-align: right; }
-        .task-info { flex: 1; margin-right: 10px; }
-        .task-info b { font-size: 14px; display: block; color: #fff; }
-        .task-info small { color: #f1c40f; font-size: 12px; }
-        .btn-action { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; min-width: 80px; }
+        
+        .card { background: #1a1a1a; padding: 12px; border-radius: 15px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .btn-action { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
         .btn-done { background: #333 !important; color: #777 !important; cursor: not-allowed; }
+        
+        .ref-box { background: #111; padding: 15px; border-radius: 15px; border: 1px dashed #f1c40f; margin-top: 15px; }
+        .leaderboard-list { text-align: right; }
+        .rank-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #222; }
     </style>
 </head>
 <body>
 
+    <div class="wallet-section">
+        <input type="text" id="wallet-addr" placeholder="عنوان 0x...">
+        <button id="save-btn" onclick="saveWallet()">ربط المحفظة ✅</button>
+    </div>
+
     <div class="stat-box">
         <div class="balance" id="score">0</div>
-        <div style="color: #aaa; font-size: 14px;" id="age-equivalent">0 $AGE</div>
+        <div id="username-display" style="color:#f1c40f; font-weight: bold;">جاري التحميل...</div>
     </div>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('game', this)">الرئيسية</div>
-        <div class="tab" onclick="switchTab('daily', this)">مهام يومية</div>
-        <div class="tab" onclick="switchTab('weekly', this)">مهام أسبوعية</div>
+        <div class="tab active" onclick="switchTab('daily', this)">يومية</div>
+        <div class="tab" onclick="switchTab('weekly', this)">أسبوعية</div>
+        <div class="tab" onclick="switchTab('invite', this)">الأصدقاء</div>
+        <div class="tab" onclick="switchTab('rank', this)">التصنيف</div>
     </div>
 
-    <div id="game" class="section active">
-        <div class="coin" id="coin-btn">🪙</div>
-        <div class="wallet-header">
-            <input type="text" id="wallet-addr" placeholder="عنوان Avalanche C-Chain...">
-            <button id="save-btn" onclick="saveWallet()">حفظ المحفظة ✅</button>
-        </div>
-    </div>
-
-    <div id="daily" class="section">
-        <div class="task-group-title">🌅 المهام اليومية</div>
-        <div id="daily-tasks-list"></div>
+    <div id="daily" class="section active">
+        <div id="daily-list"></div>
     </div>
 
     <div id="weekly" class="section">
-        <div class="task-group-title">📅 المهام الأسبوعية</div>
-        <div id="weekly-tasks-list"></div>
+        <div id="weekly-list"></div>
+    </div>
+
+    <div id="invite" class="section">
+        <div class="ref-box">
+            <h4>نظام الإحالة $AGE</h4>
+            <p style="font-size: 12px;">انسخ رابطك وادعُ أصدقائك للحصول على 50 نقطة لكل إحالة!</p>
+            <input type="text" id="ref-link" readonly style="width: 90%; background: #000; color: #f1c40f; border: 1px solid #333; padding: 8px; text-align: center;">
+            <button class="btn-action" onclick="copyRef()" style="margin-top: 10px;">نسخ الرابط</button>
+        </div>
+        <h4 style="margin-top: 20px;">أصدقاؤك: <span id="ref-count">0</span></h4>
+    </div>
+
+    <div id="rank" class="section">
+        <h4 style="color: #f1c40f;">🏆 متصدرو النقاط</h4>
+        <div id="score-rank" class="leaderboard-list"></div>
+        <hr style="border: 0.5px solid #222; margin: 20px 0;">
+        <h4 style="color: #f1c40f;">🔥 أبطال الدعوات</h4>
+        <div id="invite-rank" class="leaderboard-list"></div>
     </div>
 
     <script>
@@ -71,97 +88,84 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let uid = localStorage.getItem('age_uid') || 'U' + Math.floor(Math.random() * 900000);
+        // الحصول على البيانات من الرابط (id و username)
+        const params = new URLSearchParams(window.location.search);
+        let uid = params.get('id') || localStorage.getItem('age_uid') || 'U' + Math.floor(Math.random() * 99999);
+        let username = params.get('user') || 'لاعب مجهول';
+        let inviter = params.get('ref'); // الشخص الذي دعاك
+
         localStorage.setItem('age_uid', uid);
+        document.getElementById('username-display').innerText = "@" + username;
+        document.getElementById('ref-link').value = `https://ageiq.xyz/?id=${uid}&ref=${uid}`; // رابط الإحالة
 
-        let score = 0;
-        let wallet = '';
-
-        // --- مصفوفة المهام ---
-        const dailyTasks = [
-            { id: 'd1', title: 'زيارة الموقع الرسمي', pts: 5, url: 'https://ageiq.xyz' },
-            { id: 'd2', title: 'التفاعل في مجموعة Telegram', pts: 10, url: 'https://t.me/AgeGOLD' },
-            { id: 'd3', title: 'متابعة منشور جديد على X', pts: 5, url: 'https://x.com/ktr_2008' },
-            { id: 'd4', title: 'إعادة نشر (Retweet) على X', pts: 10, url: 'https://x.com/ktr_2008' },
-            { id: 'd5', title: 'تحقق من الأخبار اليومية', pts: 5, url: 'https://ageiq.xyz' },
-            { id: 'd6', title: 'تأكيد إنجاز مهام اليوم', pts: 5, url: '#' }
-        ];
-
-        const weeklyTasks = [
-            { id: 'w1', title: 'كتابة تعليق مفيد في Telegram', pts: 15, url: 'https://t.me/AgeGOLD' },
-            { id: 'w2', title: 'مشاركة منشور الأسبوع على X', pts: 15, url: 'https://x.com/ktr_2008' },
-            { id: 'w3', title: 'دعوة صديق لمجموعة Telegram', pts: 20, url: 'https://t.me/AgeGOLD' },
-            { id: 'w4', title: 'قراءة مقال جديد على الموقع', pts: 10, url: 'https://ageiq.xyz' },
-            { id: 'w5', title: 'نشر رابط الموقع في حسابك X', pts: 15, url: 'https://x.com/ktr_2008' }
-        ];
-
-        // المزامنة مع السيرفر
-        db.ref('players/' + uid).on('value', (s) => {
-            const d = s.val() || {};
-            score = d.points || 0;
-            wallet = d.wallet || '';
-            updateUI(d.completed || {});
-        });
-
-        // حماية النقر: منع النقر المستمر (Long Press)
-        const coinBtn = document.getElementById('coin-btn');
-        coinBtn.addEventListener('click', () => {
-            score++;
-            sync();
-        });
-
-        function sync() {
-            db.ref('players/' + uid).update({ points: score, wallet: wallet });
-        }
-
-        function updateUI(completed) {
-            document.getElementById('score').innerText = score.toLocaleString();
-            document.getElementById('age-equivalent').innerText = (score / 1000).toFixed(2) + " $AGE";
-            
-            if(wallet) {
-                document.getElementById('wallet-addr').value = wallet;
-                document.getElementById('save-btn').innerText = "تم الحفظ ✅";
-                document.getElementById('save-btn').classList.add('btn-done');
+        // التحقق من الإحالة لأول مرة
+        function checkReferral() {
+            if (inviter && inviter !== uid) {
+                const refKey = `referred_${uid}`;
+                if (!localStorage.getItem(refKey)) {
+                    db.ref('players/' + inviter).once('value', (s) => {
+                        if (s.exists()) {
+                            db.ref('players/' + inviter).update({
+                                points: (s.val().points || 0) + 50,
+                                invites: (s.val().invites || 0) + 1
+                            });
+                            localStorage.setItem(refKey, 'done');
+                        }
+                    });
+                }
             }
-
-            renderTasks(dailyTasks, 'daily-tasks-list', completed);
-            renderTasks(weeklyTasks, 'weekly-tasks-list', completed);
         }
 
-        function renderTasks(tasks, containerId, completed) {
-            let html = '';
-            tasks.forEach(t => {
-                const isDone = completed[t.id];
-                html += `
-                    <div class="card">
-                        <div class="task-info"><b>${t.title}</b><small>+${t.pts} نقطة</small></div>
-                        <button class="btn-action ${isDone ? 'btn-done' : ''}" 
-                                onclick="${isDone ? '' : `runTask('${t.url}', ${t.pts}, '${t.id}')`}">
-                            ${isDone ? 'تمت ✅' : 'Verify'}
-                        </button>
-                    </div>`;
-            });
-            document.getElementById(containerId).innerHTML = html;
-        }
-
-        function runTask(url, pts, id) {
-            if(url !== '#') window.open(url, "_blank");
-            setTimeout(() => {
-                db.ref(`players/${uid}/points`).transaction(p => (p || 0) + pts);
-                db.ref(`players/${uid}/completed/${id}`).set(true);
-                alert("تم التحقق وإضافة النقاط ✅");
-            }, 3000);
-        }
-
-        function saveWallet() {
+        // حفظ المحفظة مع منع التكرار
+        async function saveWallet() {
             const addr = document.getElementById('wallet-addr').value.trim();
-            if (/^0x[a-fA-F0-9]{40}$/.test(addr)) {
-                wallet = addr;
-                sync();
-                alert("تم ربط المحفظة بنجاح ✅");
+            if (!/^0x[a-fA-F0-9]{40}$/.test(addr)) return alert("عنوان غير صحيح!");
+
+            const snapshot = await db.ref('players').orderByChild('wallet').equalTo(addr).once('value');
+            if (snapshot.exists()) {
+                alert("❌ هذه المحفظة مرتبطة بحساب آخر بالفعل!");
             } else {
-                alert("يرجى إدخال عنوان Avalanche صحيح!");
+                db.ref('players/' + uid).update({ wallet: addr });
+                alert("✅ تم ربط المحفظة بنجاح!");
             }
+        }
+
+        // مزامنة البيانات
+        db.ref('players/' + uid).on('value', (s) => {
+            const d = s.val() || { points: 0, invites: 0 };
+            document.getElementById('score').innerText = (d.points || 0).toLocaleString();
+            document.getElementById('ref-count').innerText = d.invites || 0;
+            if (d.wallet) {
+                document.getElementById('wallet-addr').value = d.wallet;
+                document.getElementById('save-btn').innerText = "تم الربط ✅";
+                document.getElementById('save-btn').className = "btn-done";
+            }
+        });
+
+        // جلب التصنيفات
+        function loadRankings() {
+            db.ref('players').orderByChild('points').limitToLast(10).on('value', s => {
+                let html = '';
+                s.forEach(child => {
+                    html = `<div class="rank-item"><span>${child.key}</span><b>${child.val().points}</b></div>` + html;
+                });
+                document.getElementById('score-rank').innerHTML = html;
+            });
+
+            db.ref('players').orderByChild('invites').limitToLast(10).on('value', s => {
+                let html = '';
+                s.forEach(child => {
+                    html = `<div class="rank-item"><span>${child.key}</span><b>${child.val().invites || 0} دعوة</b></div>` + html;
+                });
+                document.getElementById('invite-rank').innerHTML = html;
+            });
+        }
+
+        function copyRef() {
+            const link = document.getElementById('ref-link');
+            link.select();
+            document.execCommand('copy');
+            alert("تم نسخ رابط الدعوة!");
         }
 
         function switchTab(id, el) {
@@ -169,7 +173,11 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             el.classList.add('active');
+            if(id === 'rank') loadRankings();
         }
+
+        checkReferral();
+        loadRankings();
     </script>
 </body>
 </html>
