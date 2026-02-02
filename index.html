@@ -3,59 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AGE Game - Official</title>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <title>AGE Game - Official Edition</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     
     <style>
-        body { background-color: #000; color: #fff; text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; user-select: none; }
-        .stat-box { background: linear-gradient(180deg, #1a1a1a, #000); padding: 20px; border-radius: 20px; border: 2px solid #f1c40f; margin-top: 50px; }
-        .balance { font-size: 40px; color: #f1c40f; font-weight: bold; }
-        .coin { font-size: 120px; margin: 30px 0; cursor: pointer; display: inline-block; transition: 0.1s; -webkit-tap-highlight-color: transparent; }
-        .coin:active { transform: scale(0.95); }
-        .tabs { display: flex; background: #111; border-radius: 15px; padding: 5px; margin-top: 20px; }
-        .tab { flex: 1; padding: 12px; cursor: pointer; border-radius: 12px; color: #888; }
+        body { background-color: #000; color: #fff; text-align: center; font-family: 'Arial', sans-serif; margin: 0; padding: 15px; user-select: none; }
+        .stat-box { background: linear-gradient(180deg, #1a1a1a, #000); padding: 25px; border-radius: 20px; border: 2px solid #f1c40f; margin-top: 20px; }
+        .balance { font-size: 45px; color: #f1c40f; font-weight: bold; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
+        .coin { font-size: 130px; margin: 40px 0; cursor: pointer; display: inline-block; transition: 0.1s; -webkit-tap-highlight-color: transparent; }
+        .coin:active { transform: scale(0.9); }
+        .tabs { display: flex; background: #111; border-radius: 15px; padding: 5px; margin-top: 20px; gap: 5px; }
+        .tab { flex: 1; padding: 12px; cursor: pointer; border-radius: 12px; color: #888; transition: 0.3s; }
         .tab.active { background: #f1c40f; color: #000; font-weight: bold; }
-        .section { display: none; padding: 20px 0; }
+        .section { display: none; animation: fadeIn 0.5s; }
         .section.active { display: block; }
-        .card { background: #1a1a1a; padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
-        .btn { background: #f1c40f; color: #000; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn:disabled { background: #333; color: #777; }
+        .card { background: #1a1a1a; padding: 15px; border-radius: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
+        .btn { background: #f1c40f; color: #000; border: none; padding: 10px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .btn-done { background: #27ae60 !important; color: #fff !important; cursor: default; }
+        input { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #333; background: #000; color: #fff; outline: none; transition: 0.3s; }
+        input:focus { border-color: #f1c40f; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div class="stat-box">
         <div class="balance" id="score">0</div>
-        <div style="color: #aaa;">رصيدك من $AGE</div>
+        <div style="color: #aaa; font-size: 14px; margin-top: 5px;">رصيدك من عملة $AGE</div>
     </div>
 
     <div class="tabs">
-        <div class="tab active" onclick="showTab('game')">اللعب</div>
-        <div class="tab" onclick="showTab('tasks')">المهام</div>
-        <div class="tab" onclick="showTab('wallet')">المحفظة</div>
+        <div class="tab active" onclick="switchTab('game', this)">الرئيسية</div>
+        <div class="tab" onclick="switchTab('tasks', this)">المهام</div>
+        <div class="tab" onclick="switchTab('wallet', this)">المحفظة</div>
     </div>
 
     <div id="game" class="section active">
         <div class="coin" onclick="handleTap()">🪙</div>
+        <p style="color: #666;">انقر لجمع النقاط</p>
     </div>
 
     <div id="tasks" class="section">
         <div class="card">
             <div style="text-align: right;"><b>📢 قناة التلغرام</b><br><small>+5000 نقطة</small></div>
-            <button class="btn" id="btn-tg" onclick="doTask('https://t.me/AgeGOLD', 'tg', 5000)">انضمام</button>
+            <button class="btn" id="task-tg" onclick="completeTask('https://t.me/AgeGOLD', 'tg', 5000)">انضمام</button>
+        </div>
+        <div class="card">
+            <div style="text-align: right;"><b>🐦 متابعة تويتر (X)</b><br><small>+2000 نقطة</small></div>
+            <button class="btn" id="task-tw" onclick="completeTask('https://x.com/ktr_2008', 'tw', 2000)">متابعة</button>
         </div>
     </div>
 
     <div id="wallet" class="section">
-        <div class="card" style="flex-direction: column; gap: 15px;">
-            <input type="text" id="wallet-input" placeholder="0x..." style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #444; background: #000; color: #fff;">
-            <button class="btn" onclick="saveWalletAddress()" style="width: 100%;">حفظ محفظة Avalanche C-Chain</button>
+        <div style="padding: 10px;">
+            <h3>ربط المحفظة 💰</h3>
+            <p style="color: #888; font-size: 12px;">يجب أن يكون العنوان Avalanche C-Chain (0x...)</p>
+            <input type="text" id="wallet-input" placeholder="0x123...">
+            <button class="btn" id="save-btn" onclick="saveWallet()" style="width: 100%; margin-top: 15px; height: 45px;">حفظ العنوان</button>
         </div>
     </div>
 
     <script>
-        // --- ضع بياناتك هنا بدقة ---
+        // إعدادات Firebase الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyDt6tmNq_On6_wnCbQdqmiMcNkgZAxGZPo",
             databaseURL: "https://age-game-d193d-default-rtdb.firebaseio.com",
@@ -63,65 +73,79 @@
             appId: "1:1086396979239:web:6652b5bebee7f5126c1602"
         };
 
-        // تشغيل Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // معرف المستخدم
-        let uid = localStorage.getItem('age_uid');
-        if (!uid) {
-            uid = 'user_' + Math.floor(Math.random() * 1000000);
-            localStorage.setItem('age_uid', uid);
-        }
+        // نظام معرف المستخدم
+        let uid = localStorage.getItem('age_uid') || 'U' + Math.floor(Math.random() * 888888);
+        localStorage.setItem('age_uid', uid);
 
-        let currentScore = 0;
+        let currentPoints = 0;
 
-        // قراءة البيانات من السيرفر
+        // مزامنة البيانات من السيرفر
         db.ref('players/' + uid).on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                currentScore = data.points || 0;
-                document.getElementById('score').innerText = currentScore.toLocaleString();
-                if (data.wallet) document.getElementById('wallet-input').value = data.wallet;
-                if (data.tasks?.tg) {
-                    const btn = document.getElementById('btn-tg');
-                    btn.innerText = "تم التحقق ✅";
-                    btn.disabled = true;
+                currentPoints = data.points || 0;
+                document.getElementById('score').innerText = currentPoints.toLocaleString();
+                
+                // تحديث حالة المحفظة إذا كانت محفوظة
+                if (data.wallet) {
+                    const input = document.getElementById('wallet-input');
+                    const btn = document.getElementById('save-btn');
+                    input.value = data.wallet;
+                    input.style.borderColor = "#27ae60";
+                    btn.innerText = "تم الحفظ ✅";
+                    btn.className = "btn btn-done";
                 }
+
+                // تحديث حالة المهام
+                if (data.tasks?.tg) markTaskDone('task-tg');
+                if (data.tasks?.tw) markTaskDone('task-tw');
             }
         });
 
         function handleTap() {
-            currentScore++;
-            document.getElementById('score').innerText = currentScore.toLocaleString();
-            db.ref('players/' + uid).update({ points: currentScore });
+            currentPoints += 1;
+            document.getElementById('score').innerText = currentPoints.toLocaleString();
+            db.ref('players/' + uid).update({ points: currentPoints });
         }
 
-        function showTab(tabName) {
+        function switchTab(id, el) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-            event.currentTarget.classList.add('active');
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
         }
 
-        function doTask(url, taskKey, bonus) {
+        function completeTask(url, key, bonus) {
             window.open(url, '_blank');
             setTimeout(() => {
                 db.ref('players/' + uid).update({
-                    points: currentScore + bonus,
-                    [`tasks/${taskKey}`]: true
+                    points: currentPoints + bonus,
+                    [`tasks/${key}`]: true
                 });
-                alert("تم إضافة النقاط!");
+                alert("تم التحقق وإضافة النقاط! ✅");
             }, 3000);
         }
 
-        function saveWalletAddress() {
-            const addr = document.getElementById('wallet-input').value.trim();
+        function markTaskDone(btnId) {
+            const b = document.getElementById(btnId);
+            b.innerText = "تمت ✅";
+            b.classList.add('btn-done');
+            b.onclick = null;
+        }
+
+        function saveWallet() {
+            const input = document.getElementById('wallet-input');
+            const addr = input.value.trim();
+            // التحقق من عنوان Avalanche (يبدأ بـ 0x وطوله 42)
             if (/^0x[a-fA-F0-9]{40}$/.test(addr)) {
                 db.ref('players/' + uid).update({ wallet: addr });
-                alert("تم حفظ المحفظة بنجاح ✅");
+                alert("تم ربط المحفظة بنجاح! ✅");
             } else {
-                alert("يرجى إدخال عنوان Avalanche صحيح يبدأ بـ 0x");
+                alert("خطأ: يرجى إدخال عنوان Avalanche صحيح (يبدأ بـ 0x)");
+                input.style.borderColor = "#e74c3c";
             }
         }
     </script>
