@@ -23,7 +23,7 @@
         .section { display: none; animation: fadeIn 0.3s; }
         .section.active { display: block; }
 
-        /* كروت المهام */
+        /* كروت المهام الاجتماعية */
         .task-card { background: var(--card); border: 1px solid #222; border-radius: 15px; padding: 15px; margin-bottom: 12px; text-align: right; }
         .task-title { font-weight: bold; font-size: 15px; display: block; margin-bottom: 5px; }
         .task-reward { color: var(--gold); font-size: 12px; }
@@ -89,6 +89,12 @@
 
         <div id="tab4" class="section">
             <h3 class="list-title">تصنيف الاحاله</h3>
+            <div class="task-card" style="text-align:center; border: 1px dashed var(--gold);">
+                <span class="task-title">نظام الإحالة الجديد 🚀</span>
+                <p style="font-size:12px; color:#aaa;">شارك الرابط واحصل على <b>100 نقطة</b> لكل صديق!</p>
+                <input type="text" id="ref-link-val" readonly style="width:100%; background:#000; color:var(--gold); border:1px solid #333; padding:8px; border-radius:5px; text-align:center; font-size:11px; margin-bottom:10px;">
+                <button class="btn-act btn-go" onclick="copyRef()">نسخ رابط الإحالة</button>
+            </div>
             <div id="ref-list"></div>
         </div>
 
@@ -121,20 +127,24 @@
         let uid = params.get('id') || localStorage.getItem('age_uid') || "U"+Math.floor(Math.random()*9999);
         localStorage.setItem('age_uid', uid);
 
+        // إعداد رابط البوت مع المعرف الخاص باللاعب
+        document.getElementById('ref-link-val').value = `https://t.me/AGEIQ_bot?start=${uid}`;
+
         let userData = {};
         let openedLinks = {};
+
+        // تم حذف المهمة الأخيرة "دعوة صديق للقناة"
         const socialTasks = [
             {id:'s1', n:'متابعة تويتر', u:'https://x.com/ktr_2008'},
             {id:'s2', n:'مجموعة تلغرام', u:'https://t.me/AGEGOLD'},
             {id:'s3', n:'إعجاب بآخر منشور', u:'https://x.com/ktr_2008'},
             {id:'s4', n:'إعادة نشر التغريدة', u:'https://x.com/ktr_2008'},
             {id:'s5', n:'رسالة في المجموعة', u:'https://t.me/AGEGOLD'},
-            {id:'s6', n:'اشتراك يوتيوب', u:'https://www.youtube.com/@AGECOIN'},
-            {id:'s7', n:'دعوة صديق للقناة', u:'https://t.me/AGEGOLD'}
+            {id:'s6', n:'اشتراك يوتيوب', u:'https://www.youtube.com/@AGECOIN'}
         ];
 
         db.ref('players/'+uid).on('value', (s) => {
-            userData = s.val() || {points:0, current_day:0, last_claim:0};
+            userData = s.val() || {points:0, current_day:0, last_claim:0, invites:0};
             document.getElementById('user-pts').innerText = (userData.points || 0).toLocaleString();
             document.getElementById('user-name').innerText = "@" + (userData.username || username);
             if(userData.wallet) document.getElementById('wallet-header').style.display = 'none';
@@ -142,7 +152,6 @@
             renderWeekly();
         });
 
-        // 🎯 نظام المهام مع الحماية
         function renderSocial(done) {
             let h = '';
             socialTasks.forEach(t => {
@@ -167,7 +176,6 @@
             db.ref(`players/${uid}/done/${id}`).set(true);
         }
 
-        // ⚡ نظام الـ 7 أيام المتسلسل
         function renderWeekly() {
             const container = document.getElementById('days-container');
             container.innerHTML = '';
@@ -196,10 +204,15 @@
                 current_day: day,
                 last_claim: Date.now()
             });
-            alert("تم استلام مكافأة اليوم " + day);
         }
 
-        // 🏆 التصنيفات
+        function copyRef() {
+            const copyText = document.getElementById("ref-link-val");
+            copyText.select();
+            document.execCommand("copy");
+            alert("تم نسخ رابط البوت! ابدأ بدعوة أصدقائك للحصول على 100 نقطة.");
+        }
+
         function showTab(t, el) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
