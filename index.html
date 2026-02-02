@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة AGE - النسخة الآمنة</title>
+    <title>AGE Game - Ultimate Edition</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    
     <style>
         body { background-color: #000; color: #fff; text-align: center; font-family: sans-serif; direction: rtl; margin: 0; padding: 15px; touch-action: manipulation; }
-        .wallet-header { position: absolute; top: 10px; right: 10px; z-index: 100; text-align: right; background: rgba(26, 26, 26, 0.9); padding: 8px; border-radius: 12px; border: 1px solid #f1c40f; width: 140px; }
-        .wallet-header input { width: 90%; font-size: 10px; padding: 5px; border-radius: 5px; border: 1px solid #333; background: #000; color: #fff; margin-bottom: 5px; }
-        .wallet-header button { width: 100%; font-size: 10px; background: #f1c40f; color: #000; border: none; padding: 4px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .stat-box { background: linear-gradient(180deg, #1a1a1a, #000); padding: 25px 15px 15px 15px; border-radius: 20px; border: 2px solid #f1c40f; margin-top: 50px; margin-bottom: 15px; }
+        .wallet-header { position: absolute; top: 10px; right: 10px; z-index: 100; background: rgba(26,26,26,0.9); padding: 8px; border-radius: 12px; border: 1px solid #f1c40f; width: 140px; }
+        .wallet-header input { width: 90%; font-size: 10px; padding: 5px; background: #000; color: #fff; border: 1px solid #333; margin-bottom: 5px; outline: none; transition: 0.3s; }
+        .wallet-header button { width: 100%; font-size: 10px; background: #f1c40f; color: #000; border: none; padding: 4px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .stat-box { background: linear-gradient(180deg, #1a1a1a, #000); padding: 30px 15px 15px; border-radius: 20px; border: 2px solid #f1c40f; margin-top: 65px; margin-bottom: 15px; }
         .balance { font-size: 38px; color: #f1c40f; font-weight: bold; }
-        .coin { font-size: 100px; margin: 15px 0; cursor: pointer; transition: 0.1s; display: inline-block; user-select: none; }
+        .coin { font-size: 100px; margin: 20px 0; cursor: pointer; display: inline-block; user-select: none; transition: 0.1s; }
         .coin:active { transform: scale(0.9); }
         .tabs { display: flex; justify-content: space-around; background: #111; border-radius: 12px; padding: 5px; margin-bottom: 15px; }
         .tab { cursor: pointer; padding: 10px; font-size: 14px; flex: 1; border-radius: 10px; }
@@ -19,15 +22,15 @@
         .section { display: none; }
         .section.active { display: block; }
         .card { background: #1a1a1a; padding: 12px; border-radius: 15px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; text-align: right; }
-        .btn-action { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-action { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
         .btn-done { background: #333 !important; color: #777 !important; cursor: not-allowed; pointer-events: none; }
     </style>
 </head>
 <body>
 
     <div class="wallet-header">
-        <input type="text" id="wallet-addr" placeholder="عنوان المحفظة...">
-        <button onclick="saveWallet()">حفظ المحفظة 💰</button>
+        <input type="text" id="wallet-addr" placeholder="عنوان Avalanche C-Chain...">
+        <button id="save-btn" onclick="saveWallet()">حفظ المحفظة 💰</button>
     </div>
 
     <div class="stat-box">
@@ -50,116 +53,130 @@
     </div>
 
     <div id="tasks" class="section">
-        <div class="card">
-            <div><b>🐦 متابعة تويتر</b><br><small>+1000 نقطة</small></div>
-            <button class="btn-action" id="task_twitter" onclick="runTask('https://x.com/ktr_2008', 1000, 'task_twitter')">تنفيذ</button>
-        </div>
-        <div class="card">
-            <div><b>📢 قناة التلغرام</b><br><small>+5000 نقطة</small></div>
-            <button class="btn-action" id="task_telegram" onclick="runTask('https://t.me/AgeGOLD', 5000, 'task_telegram')">انضمام</button>
-        </div>
-        <div class="card">
-            <div><b>📺 قناة اليوتيوب</b><br><small>+5000 نقطة</small></div>
-            <button class="btn-action" id="task_youtube" onclick="runTask('https://www.youtube.com/@AGECOIN', 5000, 'task_youtube')">اشترك</button>
-        </div>
+        <div class="card"><div><b>🐦 متابعة تويتر</b><br><small>+1000</small></div><button class="btn-action" id="t_tw" onclick="runTask('https://x.com/ktr_2008', 1000, 't_tw')">تنفيذ</button></div>
+        <div class="card"><div><b>📢 قناة تلغرام</b><br><small>+5000</small></div><button class="btn-action" id="t_tg" onclick="runTask('https://t.me/AgeGOLD', 5000, 't_tg')">انضمام</button></div>
+        <div class="card"><div><b>🌐 زيارة الموقع</b><br><small>+500</small></div><button class="btn-action" id="t_web" onclick="runTask('https://ageiq.xyz/', 500, 't_web')">زيارة</button></div>
     </div>
 
     <div id="rank" class="section">
-        <h3>قائمة المتصدرين 🏆</h3>
-        <div id="leaderboard">
-            <div class="card"><span>1. أنت (بطل AGE)</span> <b style="color:#f1c40f" id="user-rank">0</b></div>
-        </div>
-        <button class="btn-action" style="width:100%; margin-top:10px;" onclick="copyRef()">🔗 دعوة صديق (+10,000 نقطة)</button>
+        <h3>المتصدرين 🏆</h3>
+        <div id="leaderboard"><div class="card"><span>أنت</span> <b style="color:#f1c40f" id="user-rank">0</b></div></div>
     </div>
 
     <script>
-        let score = localStorage.getItem('age_points') ? parseInt(localStorage.getItem('age_points')) : 0;
-        
+        // إعدادات Firebase الخاصة بك مدمجة من صورتك الأخيرة
+        const firebaseConfig = {
+            apiKey: "AIzaSyDt6tmNq_On6_wnCbQdqmiMcNkgZAxGZPo",
+            databaseURL: "https://age-game-d193d-default-rtdb.firebaseio.com",
+            projectId: "age-game-d193d",
+            appId: "1:1086396979239:web:6652b5bebee7f5126c1602"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let uid = localStorage.getItem('age_uid') || 'U' + Math.floor(Math.random() * 900000);
+        localStorage.setItem('age_uid', uid);
+
+        let score = 0;
+        let wallet = '';
+
+        // المزامنة مع السيرفر
+        db.ref('players/' + uid).on('value', (s) => {
+            const d = s.val();
+            if(d) { 
+                score = d.points || 0; 
+                wallet = d.wallet || ''; 
+                updateUI(); 
+            }
+        });
+
+        function sync() { 
+            db.ref('players/' + uid).update({ 
+                points: score, 
+                wallet: wallet,
+                lastSeen: firebase.database.ServerValue.TIMESTAMP 
+            }); 
+        }
+
         function updateUI() {
             document.getElementById('score').innerText = score.toLocaleString();
             document.getElementById('age-equivalent').innerText = (score / 1000).toFixed(2) + " $AGE";
             document.getElementById('user-rank').innerText = score.toLocaleString();
-            localStorage.setItem('age_points', score);
-            checkTasksStatus();
+            
+            if(wallet) {
+                const wInput = document.getElementById('wallet-addr');
+                wInput.value = wallet;
+                wInput.style.borderColor = "#2ecc71";
+                document.getElementById('save-btn').innerText = "تم الحفظ ✅";
+                document.getElementById('save-btn').classList.add('btn-done');
+            }
+
+            ['t_tw', 't_tg', 't_web'].forEach(id => {
+                if(localStorage.getItem(id)) {
+                    const b = document.getElementById(id);
+                    if(b) { b.innerText = "تمت ✅"; b.className = "btn-action btn-done"; }
+                }
+            });
+
+            // تحديث حالة المكافأة اليومية
+            const last = localStorage.getItem('daily');
+            if(last && (new Date().getTime() - last < 86400000)) {
+                const dBtn = document.getElementById('daily-btn');
+                dBtn.innerText = "تم الاستلام";
+                dBtn.classList.add('btn-done');
+            }
         }
 
-        function tap() {
-            score += 1;
-            updateUI();
+        function tap() { score += 1; updateUI(); sync(); }
+
+        function saveWallet() {
+            const wInput = document.getElementById('wallet-addr');
+            const addr = wInput.value.trim();
+            // التحقق من صحة عنوان Avalanche C-Chain
+            const isValidAvax = /^0x[a-fA-F0-9]{40}$/.test(addr);
+
+            if (isValidAvax) {
+                wallet = addr;
+                sync();
+                alert("تم التحقق وحفظ المحفظة بنجاح ✅");
+                updateUI();
+            } else {
+                alert("خطأ: يرجى إدخال عنوان Avalanche صحيح يبدأ بـ 0x");
+                wInput.style.borderColor = "#e74c3c";
+            }
+        }
+        
+        function runTask(url, pts, id) {
+            if(localStorage.getItem(id)) return;
+            window.open(url, "_blank");
+            setTimeout(() => { 
+                score += pts; 
+                localStorage.setItem(id, 'done'); 
+                updateUI(); 
+                sync(); 
+            }, 4000);
+        }
+
+        function claimDaily() {
+            const last = localStorage.getItem('daily');
+            const now = new Date().getTime();
+            if(last && (now - last < 86400000)) { 
+                alert("المكافأة القادمة بعد 24 ساعة!"); 
+                return; 
+            }
+            score += 1000; 
+            localStorage.setItem('daily', now); 
+            updateUI(); 
+            sync();
         }
 
         function switchTab(id, el) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            el.classList.add('active');
+            document.getElementById(id).classList.add('active'); el.classList.add('active');
         }
 
-        function runTask(url, pts, taskId) {
-            if(localStorage.getItem(taskId)) return; // منع التنفيذ إذا كانت المهمة منتهية
-
-            window.open(url, "_blank");
-            setTimeout(() => {
-                score += pts;
-                localStorage.setItem(taskId, 'completed'); // تسجيل المهمة كمنتهية للأبد
-                updateUI();
-                alert("تهانينا! حصلت على النقاط.");
-            }, 4000);
-        }
-
-        function claimDaily() {
-            const lastClaim = localStorage.getItem('last_daily_claim');
-            const now = new Date().getTime();
-            const oneDay = 24 * 60 * 60 * 1000;
-
-            if (lastClaim && (now - lastClaim < oneDay)) {
-                alert("لقد استلمت جائزتك اليوم! عد بعد 24 ساعة.");
-                return;
-            }
-
-            score += 1000;
-            localStorage.setItem('last_daily_claim', now);
-            updateUI();
-            alert("تم استلام 1000 نقطة بنجاح!");
-        }
-
-        function checkTasksStatus() {
-            // التحقق من حالة كل مهمة عند تشغيل التطبيق
-            const tasks = ['task_twitter', 'task_telegram', 'task_youtube'];
-            tasks.forEach(t => {
-                if(localStorage.getItem(t)) {
-                    const btn = document.getElementById(t);
-                    if(btn) {
-                        btn.innerText = "تمت ✅";
-                        btn.className = "btn-action btn-done";
-                        btn.disabled = true;
-                    }
-                }
-            });
-
-            // التحقق من المهمة اليومية
-            const lastClaim = localStorage.getItem('last_daily_claim');
-            const now = new Date().getTime();
-            if (lastClaim && (now - lastClaim < 24 * 60 * 60 * 1000)) {
-                const dailyBtn = document.getElementById('daily-btn');
-                dailyBtn.innerText = "عد غداً";
-                dailyBtn.className = "btn-action btn-done";
-                document.getElementById('daily-status').innerText = "المهمة القادمة متاحة غداً";
-            }
-        }
-
-        function saveWallet() {
-            const addr = document.getElementById('wallet-addr').value;
-            if(addr.length < 5) return;
-            localStorage.setItem('user_wallet', addr);
-            alert("تم حفظ المحفظة!");
-        }
-
-        window.onload = function() {
-            const savedWallet = localStorage.getItem('user_wallet');
-            if(savedWallet) document.getElementById('wallet-addr').value = savedWallet;
-            updateUI();
-        }
+        updateUI();
     </script>
 </body>
 </html>
