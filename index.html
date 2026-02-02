@@ -3,55 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AGE Game - Tasks System</title>
+    <title>AGE Game - Ultimate Tasks</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        body { background-color: #000; color: #fff; text-align: center; font-family: 'Arial', sans-serif; margin: 0; padding: 10px; }
-        .stat-box { background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #f1c40f; margin-bottom: 15px; }
-        .balance { font-size: 32px; color: #f1c40f; font-weight: bold; }
-        .tabs { display: flex; background: #111; border-radius: 10px; padding: 5px; margin-bottom: 15px; }
-        .tab { flex: 1; padding: 10px; cursor: pointer; border-radius: 8px; font-size: 13px; color: #888; }
+        body { background-color: #00; color: #fff; text-align: center; font-family: 'Arial', sans-serif; margin: 0; padding: 15px; user-select: none; }
+        .stat-box { background: linear-gradient(180deg, #1a1a1a, #000); padding: 20px; border-radius: 20px; border: 2px solid #f1c40f; margin-bottom: 15px; }
+        .balance { font-size: 35px; color: #f1c40f; font-weight: bold; }
+        .coin { font-size: 100px; margin: 20px 0; cursor: pointer; display: inline-block; transition: 0.1s; -webkit-tap-highlight-color: transparent; }
+        .coin:active { transform: scale(0.9); }
+        .tabs { display: flex; background: #111; border-radius: 12px; padding: 5px; margin-bottom: 15px; gap: 5px; }
+        .tab { flex: 1; padding: 10px; cursor: pointer; border-radius: 10px; color: #888; font-size: 12px; }
         .tab.active { background: #f1c40f; color: #000; font-weight: bold; }
         .section { display: none; }
         .section.active { display: block; }
-        .task-group-title { text-align: right; color: #f1c40f; margin: 15px 5px 5px; font-size: 14px; font-weight: bold; }
-        .card { background: #161616; padding: 12px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
-        .task-info { text-align: right; }
-        .task-info b { font-size: 14px; display: block; }
+        .task-group-title { text-align: right; color: #f1c40f; margin: 15px 5px 10px; font-size: 16px; border-right: 3px solid #f1c40f; padding-right: 10px; }
+        .card { background: #111; padding: 12px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
+        .task-info { text-align: right; flex: 1; }
+        .task-info b { font-size: 13px; display: block; color: #eee; }
         .task-info small { color: #f1c40f; font-size: 11px; }
-        .btn { background: #f1c40f; color: #000; border: none; padding: 7px 15px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
-        .btn-done { background: #27ae60 !important; color: #fff !important; }
+        .btn { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 11px; min-width: 70px; }
+        .btn-done { background: #27ae60 !important; color: #fff !important; cursor: default; }
+        input { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #333; background: #000; color: #fff; margin-top: 10px; outline: none; }
     </style>
 </head>
 <body>
 
     <div class="stat-box">
         <div class="balance" id="score">0</div>
-        <div style="font-size: 12px; color: #aaa;">رصيد AGE Points</div>
+        <div style="color: #aaa; font-size: 12px;">رصيد $AGE النقدي</div>
     </div>
 
     <div class="tabs">
         <div class="tab active" onclick="switchTab('daily', this)">مهام يومية</div>
         <div class="tab" onclick="switchTab('weekly', this)">مهام أسبوعية</div>
-        <div class="tab" onclick="switchTab('game', this)">اللعب</div>
+        <div class="tab" onclick="switchTab('main', this)">الرئيسية</div>
     </div>
 
     <div id="daily" class="section active">
-        <div class="task-group-title">🌅 مهام تتكرر كل 24 ساعة</div>
-        <div id="daily-list">
-            </div>
+        <div class="task-group-title">🌅 المهام اليومية</div>
+        <div id="daily-list"></div>
     </div>
 
     <div id="weekly" class="section">
-        <div class="task-group-title">📅 مهام تتكرر كل أسبوع</div>
+        <div class="task-group-title">📅 المهام الأسبوعية والإضافية</div>
         <div id="weekly-list"></div>
     </div>
 
-    <div id="game" class="section">
-        <div style="font-size: 80px; margin: 20px;" onclick="tap()">🪙</div>
-        <input type="text" id="wallet-input" placeholder="عنوان محفظة Avalanche..." style="width: 80%; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; margin-bottom: 10px;">
-        <button class="btn" id="save-btn" onclick="saveWallet()" style="width: 85%;">حفظ المحفظة ✅</button>
+    <div id="main" class="section">
+        <div class="coin" id="coin-btn">🪙</div>
+        <p style="color: #666;">انقر لزيادة رصيدك</p>
+        <div class="card" style="flex-direction: column;">
+            <b style="color: #f1c40f;">ربط المحفظة (Avalanche C-Chain)</b>
+            <input type="text" id="wallet-input" placeholder="0x...">
+            <button class="btn" id="save-btn" onclick="saveWallet()" style="width: 100%; margin-top: 10px; padding: 12px;">حفظ العنوان ✅</button>
+        </div>
     </div>
 
     <script>
@@ -65,79 +71,87 @@
         const db = firebase.database();
         let uid = localStorage.getItem('age_uid') || 'U' + Math.floor(Math.random() * 999999);
         localStorage.setItem('age_uid', uid);
+
         let currentPoints = 0;
 
-        // قائمة المهام التي طلبتها
+        // --- القائمة الكاملة للـ 15 مهمة ---
         const dailyTasks = [
             { id: 'd1', title: 'زيارة الموقع الرسمي', pts: 5, url: 'https://ageiq.xyz' },
             { id: 'd2', title: 'تفاعل في مجموعة Telegram', pts: 10, url: 'https://t.me/AgeGOLD' },
-            { id: 'd3', title: 'متابعة منشور X جديد', pts: 5, url: 'https://x.com/ktr_2008' },
-            { id: 'd4', title: 'إعادة نشر (Retweet)', pts: 10, url: 'https://x.com/ktr_2008' },
-            { id: 'd5', title: 'أخبار المشروع اليومية', pts: 5, url: 'https://ageiq.xyz' },
-            { id: 'd6', title: 'تحقق من رابط Verify', pts: 5, url: 'https://t.me/AgeGOLD' }
+            { id: 'd3', title: 'متابعة منشور جديد على X', pts: 5, url: 'https://x.com/ktr_2008' },
+            { id: 'd4', title: 'إعادة نشر (Retweet) على X', pts: 10, url: 'https://x.com/ktr_2008' },
+            { id: 'd5', title: 'التحقق من أخبار المشروع', pts: 5, url: 'https://ageiq.xyz' },
+            { id: 'd6', title: 'الضغط على رابط Verify اليومي', pts: 5, url: 'https://t.me/AgeGOLD' }
         ];
 
         const weeklyTasks = [
-            { id: 'w1', title: 'تعليق مفيد في Telegram', pts: 15, url: 'https://t.me/AgeGOLD' },
-            { id: 'w2', title: 'مشاركة منشور الأسبوع X', pts: 15, url: 'https://x.com/ktr_2008' },
-            { id: 'w3', title: 'دعوة صديق للتلغرام', pts: 20, url: 'https://t.me/AgeGOLD' },
-            { id: 'w4', title: 'قراءة مقال جديد', pts: 10, url: 'https://ageiq.xyz' },
-            { id: 'w5', title: 'نشر الرابط بحسابك الشخصي', pts: 15, url: 'https://x.com/ktr_2008' }
+            { id: 'w1', title: 'كتابة تعليق مفيد في تلغرام', pts: 15, url: 'https://t.me/AgeGOLD' },
+            { id: 'w2', title: 'مشاركة منشور الأسبوع على X', pts: 15, url: 'https://x.com/ktr_2008' },
+            { id: 'w3', title: 'دعوة صديق لمجموعة التلغرام', pts: 20, url: 'https://t.me/AgeGOLD' },
+            { id: 'w4', title: 'قراءة محتوى جديد بالموقع', pts: 10, url: 'https://ageiq.xyz' },
+            { id: 'w5', title: 'نشر رابط الموقع في حسابك X', pts: 15, url: 'https://x.com/ktr_2008' },
+            { id: 'w6', title: 'الاشتراك في قناة يوتيوب', pts: 30, url: 'https://youtube.com' },
+            { id: 'w7', title: 'الانضمام لمجتمع ديسكورد', pts: 25, url: '#' },
+            { id: 'w8', title: 'تحميل الورقة البيضاء (Whitepaper)', pts: 20, url: 'https://ageiq.xyz' },
+            { id: 'w9', title: 'مشاركة البوت مع 5 أصدقاء', pts: 50, url: 'https://t.me/share/url?url=https://t.me/AgeGOLD' }
         ];
 
-        // قراءة البيانات من Firebase
+        // المزامنة مع Firebase
         db.ref('players/' + uid).on('value', (snap) => {
             const data = snap.val() || {};
             currentPoints = data.points || 0;
             document.getElementById('score').innerText = currentPoints.toLocaleString();
-            renderTasks(data.completedTasks || {});
+            
             if(data.wallet) {
-                document.getElementById('wallet-input').value = data.wallet;
+                const input = document.getElementById('wallet-input');
+                input.value = data.wallet;
+                input.style.borderColor = "#27ae60";
                 document.getElementById('save-btn').innerText = "تم الحفظ ✅";
                 document.getElementById('save-btn').className = "btn btn-done";
             }
+            renderAllTasks(data.completed || {});
         });
 
-        function renderTasks(completed) {
-            const now = Date.now();
-            const generateHtml = (tasks, containerId, expiry) => {
+        // منع النقر المستمر (فقط عند النقر الفعلي)
+        document.getElementById('coin-btn').addEventListener('click', () => {
+            currentPoints += 1;
+            document.getElementById('score').innerText = currentPoints.toLocaleString();
+            db.ref('players/' + uid).update({ points: currentPoints });
+        });
+
+        function renderAllTasks(completed) {
+            const draw = (tasks, listId) => {
                 let html = '';
                 tasks.forEach(t => {
-                    const lastDone = completed[t.id] || 0;
-                    const isDone = (now - lastDone) < expiry;
+                    const isDone = completed[t.id];
                     html += `<div class="card">
-                        <div class="task-info"><b>${t.title}</b><small>+${t.pts} نقطة</small></div>
+                        <div class="task-info"><b>${t.title}</b><small>+${t.pts} AGE</small></div>
                         <button class="btn ${isDone ? 'btn-done' : ''}" onclick="${isDone ? '' : `doTask('${t.id}', '${t.url}', ${t.pts})`}">
                             ${isDone ? 'تمت ✅' : 'تنفيذ'}
                         </button>
                     </div>`;
                 });
-                document.getElementById(containerId).innerHTML = html;
+                document.getElementById(listId).innerHTML = html;
             };
-
-            generateHtml(dailyTasks, 'daily-list', 86400000); // 24 ساعة
-            generateHtml(weeklyTasks, 'weekly-list', 604800000); // 7 أيام
+            draw(dailyTasks, 'daily-list');
+            draw(weeklyTasks, 'weekly-list');
         }
 
         function doTask(id, url, pts) {
             window.open(url, '_blank');
             setTimeout(() => {
                 db.ref(`players/${uid}/points`).transaction(p => (p || 0) + pts);
-                db.ref(`players/${uid}/completedTasks/${id}`).set(Date.now());
-                alert("أحسنت! أضيفت النقاط ✅");
+                db.ref(`players/${uid}/completed/${id}`).set(true);
+                alert("تم التحقق وإضافة النقاط ✅");
             }, 4000);
-        }
-
-        function tap() {
-            db.ref(`players/${uid}/points`).transaction(p => (p || 0) + 1);
         }
 
         function saveWallet() {
             const addr = document.getElementById('wallet-input').value.trim();
             if(/^0x[a-fA-F0-9]{40}$/.test(addr)) {
                 db.ref(`players/${uid}/wallet`).set(addr);
-                alert("تم الحفظ بنجاح!");
-            } else { alert("العنوان غير صحيح!"); }
+                alert("تم ربط المحفظة بنجاح! ✅");
+            } else { alert("خطأ في العنوان!"); }
         }
 
         function switchTab(id, el) {
