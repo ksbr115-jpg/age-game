@@ -3,77 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AGE Game - Twitter Task</title>
+    <title>AGE Mini App</title>
     <style>
-        body { background-color: #000; color: #fff; text-align: center; font-family: sans-serif; direction: rtl; margin: 0; padding: 20px; touch-action: manipulation; }
-        .balance-container { background: linear-gradient(180deg, #1a1a1a 0%, #000 100%); padding: 20px; border-radius: 20px; border: 2px solid #f1c40f; margin-bottom: 20px; }
-        .balance { font-size: 50px; color: #f1c40f; font-weight: bold; }
-        .coin { font-size: 130px; margin: 30px 0; cursor: pointer; transition: transform 0.1s; display: inline-block; user-select: none; filter: drop-shadow(0 0 10px #f1c40f); }
+        body { background-color: #000; color: #fff; text-align: center; font-family: sans-serif; direction: rtl; margin: 0; padding: 15px; touch-action: manipulation; }
+        .stat-box { background: linear-gradient(180deg, #1a1a1a, #000); padding: 15px; border-radius: 20px; border: 2px solid #f1c40f; margin-bottom: 15px; }
+        .balance { font-size: 38px; color: #f1c40f; font-weight: bold; }
+        .coin { font-size: 100px; margin: 15px 0; cursor: pointer; transition: 0.1s; display: inline-block; user-select: none; }
         .coin:active { transform: scale(0.9); }
-        .task-list { margin-top: 30px; }
-        .task-card { background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; text-align: right; }
-        .task-info b { display: block; color: #f1c40f; }
-        .task-info span { font-size: 12px; color: #aaa; }
-        .btn-action { background: #f1c40f; border: none; color: #000; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-done { background: #333; color: #777; cursor: not-allowed; }
+        .tabs { display: flex; justify-content: space-around; background: #111; border-radius: 12px; padding: 5px; margin-bottom: 15px; }
+        .tab { cursor: pointer; padding: 10px; font-size: 14px; flex: 1; border-radius: 10px; }
+        .tab.active { background: #f1c40f; color: #000; font-weight: bold; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .card { background: #1a1a1a; padding: 12px; border-radius: 15px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; text-align: right; }
+        .btn-action { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-done { background: #333 !important; color: #777 !important; cursor: not-allowed; }
     </style>
 </head>
 <body>
-    <div class="balance-container">
-        <div>رصيدك الحالي</div>
+
+    <div class="stat-box">
         <div class="balance" id="score">0</div>
-        <div style="color: #aaa;">$AGE Token</div>
+        <div style="color: #aaa; font-size: 14px;" id="age-equivalent">0 $AGE</div>
     </div>
 
-    <div class="coin" onclick="tap()">🪙</div>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('game', this)">الرئيسية</div>
+        <div class="tab" onclick="switchTab('tasks', this)">المهام</div>
+        <div class="tab" onclick="switchTab('rank', this)">التصنيف</div>
+    </div>
 
-    <div class="task-list">
-        <div class="task-card">
-            <div class="task-info">
-                <b>متابعة X (تويتر)</b>
-                <span>احصل على +5,000 $AGE</span>
-            </div>
-            <button class="btn-action" id="tw-btn" onclick="goTwitter()">تنفيذ</button>
+    <div id="game" class="section active">
+        <div class="coin" onclick="tap()">🪙</div>
+        <div class="card">
+            <div><b>🎁 المكافأة اليومية</b><br><small>احصل على +1000 نقطة</small></div>
+            <button class="btn-action" id="daily-btn" onclick="claimDaily()">استلام</button>
         </div>
+    </div>
+
+    <div id="tasks" class="section">
+        <div class="card">
+            <div><b>🐦 متابعة تويتر</b><br><small>+1000 نقطة</small></div>
+            <button class="btn-action" onclick="runTask('https://x.com/ktr_2008', 1000, this)">تنفيذ</button>
+        </div>
+        <div class="card">
+            <div><b>❤️ إعجاب لآخر منشور</b><br><small>⚠️ انتظر 5د (+2000 نقطة)</small></div>
+            <button class="btn-action" onclick="runTask('https://x.com/ktr_2008', 2000, this)">تنفيذ</button>
+        </div>
+        <div class="card">
+            <div><b>📢 قناة التلغرام</b><br><small>+5000 نقطة</small></div>
+            <button class="btn-action" onclick="runTask('https://t.me/AgeGOLD', 5000, this)">انضمام</button>
+        </div>
+        <div class="card">
+            <div><b>📺 قناة اليوتيوب</b><br><small>+5000 نقطة</small></div>
+            <button class="btn-action" onclick="runTask('https://www.youtube.com/@AGECOIN', 5000, this)">اشترك</button>
+        </div>
+        <div class="card">
+            <div><b>🌐 زيارة الموقع</b><br><small>+500 نقطة</small></div>
+            <button class="btn-action" onclick="runTask('https://ageiq.xyz/', 500, this)">زيارة</button>
+        </div>
+    </div>
+
+    <div id="rank" class="section">
+        <h3>قائمة المتصدرين 🏆</h3>
+        <div id="leaderboard">
+            <div class="card"><span>1. أنت (بطل AGE)</span> <b style="color:#f1c40f" id="user-rank">0</b></div>
+            <div class="card"><span>2. مبرمج المشروع</span> <b>999,999</b></div>
+            <div class="card"><span>3. مستخدم نشط</span> <b>150,000</b></div>
+        </div>
+        <button class="btn-action" style="width:100%; margin-top:10px;" onclick="copyRef()">🔗 دعوة صديق (+10,000 نقطة)</button>
     </div>
 
     <script>
         let score = localStorage.getItem('age_points') ? parseInt(localStorage.getItem('age_points')) : 0;
-        let twDone = localStorage.getItem('tw_task') === 'true';
         
-        document.getElementById('score').innerText = score.toLocaleString();
-        if(twDone) updateBtn();
+        function updateUI() {
+            document.getElementById('score').innerText = score.toLocaleString();
+            document.getElementById('age-equivalent').innerText = (score / 1000).toFixed(2) + " $AGE";
+            document.getElementById('user-rank').innerText = score.toLocaleString();
+            localStorage.setItem('age_points', score);
+        }
 
         function tap() {
             score += 1;
             updateUI();
         }
 
-        function goTwitter() {
-            window.open("https://x.com/ktr_2008", "_blank");
+        function switchTab(id, el) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function runTask(url, pts, btn) {
+            window.open(url, "_blank");
             setTimeout(() => {
-                if(!twDone) {
-                    score += 5000;
-                    twDone = true;
-                    localStorage.setItem('tw_task', 'true');
-                    updateUI();
-                    updateBtn();
-                    alert("تهانينا! تمت إضافة 5,000 عملة لرصيدك.");
-                }
-            }, 3000);
+                score += pts;
+                btn.innerText = "تمت ✅";
+                btn.className = "btn-action btn-done";
+                btn.disabled = true;
+                updateUI();
+            }, 4000);
         }
 
-        function updateBtn() {
-            const btn = document.getElementById('tw-btn');
-            btn.innerText = "تمت ✅";
-            btn.className = "btn-action btn-done";
+        function claimDaily() {
+            score += 1000;
+            const btn = document.getElementById('daily-btn');
             btn.disabled = true;
+            btn.innerText = "تمت ✅";
+            updateUI();
         }
 
-        function updateUI() {
-            document.getElementById('score').innerText = score.toLocaleString();
-            localStorage.setItem('age_points', score);
+        function copyRef() {
+            const link = "https://t.me/AGEIQ_bot?start=ref" + Math.floor(Math.random()*1000);
+            navigator.clipboard.writeText(link);
+            alert("تم نسخ رابط الإحالة! شاركه لتحصل على 10,000 نقطة عند دخول أصدقائك.");
         }
+
+        updateUI();
     </script>
 </body>
 </html>
