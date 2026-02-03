@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AGE GOLD - Official System</title>
+    <title>AGE GOLD - Official System & Battle</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        :root { --gold: #f1c40f; --bg: #000; --card: #111; --gray: #333; --red: #e74c3c; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; overflow-x: hidden; touch-action: manipulation; }
+        :root { --gold: #f1c40f; --bg: #000; --card: #111; --gray: #333; --red: #ff4d4d; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; overflow-x: hidden; touch-action: none; }
         
+        /* المحفظة */
         #wallet-header { position: fixed; top: 10px; right: 10px; z-index: 2000; }
         .wallet-box { background: #1a1a1a; padding: 5px; border-radius: 10px; border: 1px solid var(--gold); display: flex; gap: 5px; }
         .wallet-box input { background: #000; border: 1px solid #333; color: var(--gold); font-size: 10px; padding: 5px; width: 100px; border-radius: 5px; outline: none; }
@@ -23,26 +24,19 @@
         .section.active { display: block; }
 
         /* منطقة اللعبة الحركية */
-        #game-area { background: #080808; border-radius: 15px; border: 1px solid #222; overflow: hidden; position: relative; margin-top: 15px; }
-        canvas { display: block; background: #050505; width: 100%; height: 300px; touch-action: none; }
-        .game-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); }
+        #game-container { position: relative; width: 100%; height: 350px; background: #050505; border-radius: 15px; border: 1px solid #333; overflow: hidden; margin-top: 15px; }
+        canvas { width: 100%; height: 100%; display: block; }
+        .game-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
 
+        /* التنسيقات الأخرى */
         .task-card { background: var(--card); border: 1px solid #222; border-radius: 15px; padding: 15px; margin-bottom: 12px; text-align: right; }
-        .task-title { font-weight: bold; font-size: 15px; display: block; margin-bottom: 5px; }
-        .task-btns { display: flex; gap: 8px; margin-top: 10px; }
         .btn-act { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
         .btn-go { background: #fff; color: #000; }
         .btn-v { background: var(--gray); color: #888; cursor: not-allowed; }
         .btn-v.ready { background: var(--gold); color: #000; cursor: pointer; }
-        .btn-done { background: #222 !important; color: #555 !important; cursor: default; }
-
-        .days-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
-        .day-card { background: var(--card); border: 1px solid #222; padding: 15px; border-radius: 12px; opacity: 0.5; }
-        .day-card.open { opacity: 1; border-color: var(--gold); }
-        .btn-claim { background: var(--gold); color: #000; border: none; padding: 8px; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 8px; }
 
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: #080808; border-top: 1px solid #222; display: flex; height: 75px; z-index: 1000; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #555; border: none; background: none; gap: 5px; cursor: pointer; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #555; border: none; background: none; cursor: pointer; }
         .nav-item.active { color: var(--gold); border-top: 2px solid var(--gold); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -65,56 +59,45 @@
 
         <div id="tab1" class="section active">
             <div style="background:#111; padding:15px; border-radius:15px; border:1px solid #222;">
-                <h3 style="color:var(--gold); margin:0 0 10px 0;">ساحة معركة AGE ⚔️</h3>
-                <p style="font-size:12px; color:#aaa;">ارمِ السكاكين على الأعداء! كل إصابة = 5 نقاط</p>
-                
-                <div id="game-area">
+                <h3 style="color:var(--gold); margin:0;">ساحة معركة AGE ⚔️</h3>
+                <p style="font-size:11px; color:#aaa;">أوقف الأعداء قبل وصولهم إليك!</p>
+                <div id="game-container">
                     <canvas id="gameCanvas"></canvas>
                     <div id="game-ui" class="game-overlay">
-                        <button class="btn-link" style="padding:15px 30px; font-size:16px;" onclick="startGame()">إبدأ القتال 🎮</button>
+                        <button onclick="startGame()" style="background:var(--gold); padding:15px 30px; border-radius:10px; font-weight:bold; border:none; cursor:pointer;">إبدأ القتال ⚔️</button>
                     </div>
                 </div>
-                <p style="font-size:10px; color:#555; margin-top:10px;">انقر على الشاشة لإطلاق السكين</p>
             </div>
         </div>
 
         <div id="tab2" class="section">
-            <h3 class="list-title">مهام اجتماعية</h3>
+            <h3 class="list-title" style="color:var(--gold); text-align:right;">مهام</h3>
             <div id="social-tasks"></div>
         </div>
 
         <div id="tab3" class="section">
-            <h3 class="list-title">مهام أسبوعية</h3>
-            <div class="days-grid" id="days-container"></div>
+            <h3 class="list-title" style="color:var(--gold); text-align:right;">مهام أسبوعية</h3>
+            <div id="days-container" class="grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
         </div>
 
         <div id="tab4" class="section">
-            <h3 class="list-title">نظام الإحالة</h3>
+            <h3 class="list-title" style="color:var(--gold); text-align:right;">الإحالة</h3>
             <div class="task-card" style="text-align:center; border: 1px dashed var(--gold);">
-                <span class="task-title">شارك واربح 🚀</span>
-                <p style="font-size:12px; color:#aaa;">رابطك الخاص لدعوة الأصدقاء (100 نقطة لكل إحالة):</p>
-                <input type="text" id="ref-link-val" readonly style="width:100%; background:#000; color:var(--gold); border:1px solid #333; padding:10px; border-radius:5px; text-align:center; margin-bottom:10px;">
+                <p style="font-size:12px;">شارك الرابط واحصل على <b>100 نقطة</b>!</p>
+                <input type="text" id="ref-link-val" readonly style="width:100%; background:#000; color:var(--gold); border:1px solid #333; padding:8px; border-radius:5px; text-align:center; margin-bottom:10px;">
                 <button class="btn-act btn-go" onclick="copyRef()">نسخ الرابط</button>
             </div>
-            <div id="ref-list"></div>
-        </div>
-
-        <div id="tab5" class="section">
-            <h3 class="list-title">المتصدرين</h3>
-            <div id="pts-list"></div>
         </div>
     </div>
 
     <nav class="nav-bar">
-        <button class="nav-item active" onclick="showTab(1, this)">🏠<br>رئيسية</button>
+        <button class="nav-item active" onclick="showTab(1, this)">🏠<br>الرئيسية</button>
         <button class="nav-item" onclick="showTab(2, this)">🎯<br>مهام</button>
         <button class="nav-item" onclick="showTab(3, this)">⚡<br>أسبوعية</button>
         <button class="nav-item" onclick="showTab(4, this)">🔗<br>الإحالة</button>
-        <button class="nav-item" onclick="showTab(5, this)">🏆<br>النقاط</button>
     </nav>
 
     <script>
-        // تكوين Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDt6tmNq_On6_wnCbQdqmiMcNkgZAxGZPo",
             databaseURL: "https://age-game-d193d-default-rtdb.firebaseio.com",
@@ -125,42 +108,26 @@
         const db = firebase.database();
 
         const params = new URLSearchParams(window.location.search);
-        let username = params.get('user') || "لاعب_جديد";
         let uid = params.get('id') || localStorage.getItem('age_uid') || "U"+Math.floor(Math.random()*9999);
+        let username = params.get('user') || "لاعب_جديد";
         localStorage.setItem('age_uid', uid);
 
         document.getElementById('ref-link-val').value = `https://t.me/AGEIQ_bot?start=${uid}`;
 
-        let userData = {};
-        let openedLinks = {};
-
-        // قائمة المهام المحدثة (حذف المهمة الأخيرة)
-        const socialTasks = [
-            {id:'s1', n:'متابعة تويتر', u:'https://x.com/ktr_2008'},
-            {id:'s2', n:'مجموعة تلغرام', u:'https://t.me/AGEGOLD'},
-            {id:'s3', n:'إعجاب بآخر منشور', u:'https://x.com/ktr_2008'},
-            {id:'s4', n:'إعادة نشر التغريدة', u:'https://x.com/ktr_2008'},
-            {id:'s5', n:'رسالة في المجموعة', u:'https://t.me/AGEGOLD'}
-        ];
-
-        // --- محرك اللعبة الحركية ---
+        // --- محرك اللعبة 2.5D ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        let gameActive = false;
-        let knife = { x: 0, y: 0, active: false };
-        let enemies = [];
-        let gamePoints = 0;
+        let gameActive = false, playerX = 0, enemies = [], daggers = [];
 
-        function initGame() {
+        function initCanvas() {
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
+            playerX = canvas.width / 2;
         }
 
         function startGame() {
-            initGame();
-            gameActive = true;
-            gamePoints = 0;
-            enemies = [];
+            initCanvas();
+            gameActive = true; enemies = []; daggers = [];
             document.getElementById('game-ui').style.display = 'none';
             spawnEnemy();
             animate();
@@ -168,86 +135,85 @@
 
         function spawnEnemy() {
             if(!gameActive) return;
-            enemies.push({ x: Math.random() * (canvas.width - 40), y: -50, speed: 2 + Math.random() * 2 });
-            setTimeout(spawnEnemy, 1500);
+            enemies.push({ x: Math.random() * canvas.width, y: canvas.height * 0.35, size: 5, speed: 1.2 + Math.random() });
+            setTimeout(spawnEnemy, 1400);
         }
 
         function animate() {
             if(!gameActive) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0,0, canvas.width, canvas.height);
 
-            // السكين
-            if(knife.active) {
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(knife.x, knife.y, 4, 15);
-                knife.y -= 8;
-                if(knife.y < 0) knife.active = false;
-            }
+            // رسم اللاعب
+            ctx.fillStyle = '#f1c40f'; 
+            ctx.fillRect(playerX-15, canvas.height-50, 30, 40);
 
-            // الأعداء
-            enemies.forEach((en, index) => {
-                en.y += en.speed;
-                ctx.fillStyle = 'var(--red)';
-                ctx.fillRect(en.x, en.y, 40, 20);
-
-                // تصادم السكين مع العدو
-                if(knife.active && knife.x > en.x && knife.x < en.x + 40 && knife.y > en.y && knife.y < en.y + 20) {
-                    enemies.splice(index, 1);
-                    knife.active = false;
-                    addPoints(5); // كسب 5 نقاط
-                }
-
-                // الخسارة إذا تجاوز العدو الشاشة
-                if(en.y > canvas.height) {
-                    gameActive = false;
-                    document.getElementById('game-ui').style.display = 'flex';
-                    document.getElementById('game-ui').innerHTML = `<h2 style="color:red">انتهت اللعبة!</h2><p>جمعت ${gamePoints} نقطة</p><button class="btn-link" onclick="startGame()">إعادة</button>`;
-                }
+            // سكاكين
+            daggers.forEach((d, i) => {
+                d.y -= 8;
+                ctx.fillStyle = '#fff'; ctx.fillRect(d.x, d.y, 3, 12);
+                if(d.y < canvas.height * 0.3) daggers.splice(i,1);
             });
 
+            // أعداء بالعلم
+            enemies.forEach((en, i) => {
+                en.y += en.speed; en.size += 0.25;
+                ctx.fillStyle = '#555'; ctx.fillRect(en.x - en.size, en.y, en.size*2, en.size*2.5);
+                // العلم
+                ctx.fillStyle = '#fff'; ctx.fillRect(en.x + en.size, en.y - 5, 12, 8);
+                ctx.strokeStyle = 'blue'; ctx.strokeRect(en.x + en.size, en.y - 5, 12, 8);
+                
+                // تصادم
+                daggers.forEach((d, di) => {
+                    if(Math.abs(d.x - en.x) < en.size && Math.abs(d.y - en.y) < 15) {
+                        enemies.splice(i, 1); daggers.splice(di, 1);
+                        db.ref(`players/${uid}/points`).transaction(p => (p || 0) + 5);
+                    }
+                });
+
+                if(en.y > canvas.height - 60) {
+                    gameActive = false;
+                    document.getElementById('game-ui').style.display = 'flex';
+                    document.getElementById('game-ui').innerHTML = `<h3 style="color:red">خسرت!</h3><button onclick="startGame()">إعادة</button>`;
+                }
+            });
             requestAnimationFrame(animate);
         }
 
-        canvas.addEventListener('mousedown', (e) => {
-            if(!knife.active && gameActive) {
-                const rect = canvas.getBoundingClientRect();
-                knife.x = e.clientX - rect.left;
-                knife.y = canvas.height - 20;
-                knife.active = true;
-            }
+        canvas.addEventListener('touchstart', (e) => {
+            if(!gameActive) return;
+            playerX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+            daggers.push({ x: playerX, y: canvas.height - 50 });
         });
 
-        function addPoints(pts) {
-            gamePoints += pts;
-            db.ref(`players/${uid}/points`).transaction(p => (p || 0) + pts);
-        }
+        // --- المهام والنظام ---
+        const socialTasks = [
+            {id:'s1', n:'متابعة تويتر', u:'https://x.com/ktr_2008'},
+            {id:'s2', n:'مجموعة تلغرام', u:'https://t.me/AGEGOLD'},
+            {id:'s3', n:'إعجاب بآخر منشور', u:'https://x.com/ktr_2008'},
+            {id:'s4', n:'إعادة نشر التغريدة', u:'https://x.com/ktr_2008'},
+            {id:'s5', n:'اشتراك يوتيوب', u:'https://www.youtube.com/@AGECOIN'}
+        ];
 
-        // --- نظام المهام والقائمة ---
-        db.ref('players/'+uid).on('value', (s) => {
-            userData = s.val() || {points:0};
-            document.getElementById('user-pts').innerText = (userData.points || 0).toLocaleString();
-            document.getElementById('user-name').innerText = "@" + (userData.username || username);
-            renderSocial(userData.done || {});
+        db.ref('players/'+uid).on('value', s => {
+            let data = s.val() || {points:0};
+            document.getElementById('user-pts').innerText = data.points.toLocaleString();
+            document.getElementById('user-name').innerText = "@" + (data.username || username);
+            renderSocial(data.done || {});
         });
 
         function renderSocial(done) {
             let h = '';
             socialTasks.forEach(t => {
                 const isD = done[t.id];
-                h += `<div class="task-card">
-                    <span class="task-title">${t.n}</span>
-                    <div class="task-btns">
-                        <button class="btn-act btn-go" onclick="goLink('${t.id}','${t.u}')">فتح</button>
-                        <button class="btn-act ${isD?'btn-done':'btn-v ready'}" onclick="verify('${t.id}',${isD})">${isD?'مكتمل ✅':'تحقق'}</button>
-                    </div>
-                </div>`;
+                h += `<div class="task-card"><span class="task-title">${t.n}</span><div class="task-btns">
+                    <button class="btn-act btn-go" onclick="window.open('${t.u}','_blank')">فتح</button>
+                    <button class="btn-act ${isD?'btn-done':'btn-v ready'}" onclick="verify('${t.id}')">${isD?'✅':'تحقق'}</button>
+                </div></div>`;
             });
             document.getElementById('social-tasks').innerHTML = h;
         }
 
-        function goLink(id, u) { window.open(u,'_blank'); openedLinks[id]=true; }
-        function verify(id, isD) {
-            if(isD) return;
+        function verify(id) {
             db.ref(`players/${uid}/points`).transaction(p=>(p||0)+50);
             db.ref(`players/${uid}/done/${id}`).set(true);
         }
@@ -257,16 +223,14 @@
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             document.getElementById('tab'+t).classList.add('active');
             el.classList.add('active');
+            if(t===1) initCanvas();
         }
 
         function copyRef() {
-            const copyText = document.getElementById("ref-link-val");
-            copyText.select();
+            document.getElementById("ref-link-val").select();
             document.execCommand("copy");
-            alert("تم النسخ!");
+            alert("تم نسخ رابط الإحالة (100 نقطة)!");
         }
-
-        initGame();
     </script>
 </body>
 </html>
