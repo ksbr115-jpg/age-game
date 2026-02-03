@@ -10,39 +10,46 @@
         :root { --gold: #f1c40f; --bg: #000; --card: #111; --gray: #333; --red: #e74c3c; }
         body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; overflow-x: hidden; touch-action: manipulation; }
         
+        #wallet-header { position: fixed; top: 10px; right: 10px; z-index: 2000; }
+        .wallet-box { background: #1a1a1a; padding: 5px; border-radius: 10px; border: 1px solid var(--gold); display: flex; gap: 5px; align-items: center; }
+        .wallet-box input { background: #000; border: 1px solid #333; color: var(--gold); font-size: 10px; padding: 8px; width: 110px; border-radius: 5px; outline: none; }
+        
         .container { padding: 70px 15px 100px; text-align: center; }
-        .hero { background: linear-gradient(180deg, #151515, #000); border: 1px solid #222; border-radius: 20px; padding: 30px 15px; margin-bottom: 20px; }
-        .hero h1 { font-size: 50px; color: var(--gold); margin: 0; }
+        .hero { background: linear-gradient(180deg, #151515, #000); border: 1px solid #222; border-radius: 20px; padding: 25px 15px; margin-bottom: 20px; }
+        .hero h1 { font-size: 45px; color: var(--gold); margin: 0; }
         
         .section { display: none; animation: fadeIn 0.3s; }
         .section.active { display: block; }
 
-        /* منطقة الألعاب */
-        #game-area { background: #080808; border-radius: 15px; border: 1px solid #222; overflow: hidden; position: relative; margin-top: 15px; height: 320px; }
-        canvas { display: block; background: #050505; width: 100%; height: 100%; touch-action: none; }
-        .game-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); z-index: 10; }
-
-        .controls-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #111; border-radius: 15px; margin-top: 10px; }
-        .btn-ctrl { background: #333; color: white; border: 2px solid var(--gold); width: 60px; height: 60px; border-radius: 50%; font-size: 24px; display: flex; align-items: center; justify-content: center; }
-
-        /* التصميم العام */
-        .task-card { background: var(--card); border: 1px solid #222; border-radius: 15px; padding: 15px; margin-bottom: 12px; text-align: right; }
-        .days-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
-        .day-card { background: var(--card); border: 1px solid #222; padding: 15px; border-radius: 12px; }
-        .btn-claim { background: var(--gold); color: #000; border: none; padding: 8px; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 8px; cursor: pointer; }
+        #game-area { background: #080808; border-radius: 15px; border: 1px solid #222; overflow: hidden; position: relative; height: 320px; margin-top: 10px; }
+        canvas { display: block; width: 100%; height: 100%; touch-action: none; background: #050505; }
+        .game-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); z-index: 5; }
         
-        /* قائمة المتصدرين */
+        .task-card { background: var(--card); border: 1px solid #222; border-radius: 12px; padding: 15px; margin-bottom: 10px; text-align: right; }
+        .task-btns { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-act { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-go { background: #fff; color: #000; }
+        .btn-v { background: var(--gold); color: #000; }
+        .btn-done { background: #222 !important; color: #555 !important; }
+
         .leader-item { display: flex; justify-content: space-between; background: #111; padding: 12px; margin-bottom: 5px; border-radius: 8px; border-right: 4px solid var(--gold); }
-        .leader-item.me { background: #222; border-right-color: #fff; }
+        .leader-item.me { background: #222; border-right-color: #fff; color: var(--gold); }
 
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: #080808; border-top: 1px solid #222; display: flex; height: 75px; z-index: 1000; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #555; border: none; background: none; gap: 5px; cursor: pointer; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #555; background: none; border: none; gap: 5px; }
         .nav-item.active { color: var(--gold); border-top: 2px solid var(--gold); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
+
+    <div id="wallet-header">
+        <div class="wallet-box" id="wallet-wrap">
+            <input type="text" id="avax-addr" placeholder="AVAX 0x...">
+            <button class="btn-act btn-v" style="padding:5px 10px;" onclick="bindWallet()">ربط</button>
+        </div>
+    </div>
 
     <div class="container">
         <div class="hero">
@@ -51,42 +58,42 @@
         </div>
 
         <div id="tab1" class="section active">
-            <div class="task-btns" style="margin-bottom:10px;">
-                <button class="btn-act btn-go" onclick="setGame('knives')">⚔️ سكاكين</button>
-                <button class="btn-act btn-go" onclick="setGame('platform')">🏃 حركة</button>
-            </div>
+            <h3 style="color:var(--gold); margin-bottom:5px;">ساحة معركة AGE ⚔️</h3>
+            <p style="font-size:12px; color:#aaa; margin-bottom:10px;">إصابة العدو = 1 نقطة</p>
             <div id="game-area">
                 <canvas id="gameCanvas"></canvas>
                 <div id="game-ui" class="game-overlay">
-                    <button class="btn-link" style="padding:15px 30px; font-size:16px; background:var(--gold); border-radius:10px; border:none; font-weight:bold;" onclick="startGame()">إبدأ اللعب 🎮</button>
+                    <button class="btn-act btn-v" style="width:150px; height:50px; font-size:16px;" onclick="startGame()">إبدأ القتال 🎮</button>
                 </div>
             </div>
-            <div id="platform-ctrls" class="controls-row" style="display:none;">
-                <button class="btn-ctrl" onpointerdown="move(-1)" onpointerup="stopMove()">⬅️</button>
-                <button class="btn-ctrl" onpointerdown="jump()" style="background:var(--gold); color:#000;">⬆️</button>
-                <button class="btn-ctrl" onpointerdown="move(1)" onpointerup="stopMove()">➡️</button>
-            </div>
+            <p style="font-size:10px; color:#444; margin-top:10px;">انقر على الشاشة لإطلاق السكين</p>
+        </div>
+
+        <div id="tab2" class="section">
+            <h3 style="color:var(--gold)">المهام اليومية 🎯</h3>
+            <div id="daily-list"></div>
         </div>
 
         <div id="tab3" class="section">
-            <h3 class="list-title">مهام 7 أيام 📅</h3>
-            <div class="days-grid" id="days-container"></div>
+            <h3 style="color:var(--gold)">مكافآت 7 أيام 📅</h3>
+            <div id="weekly-list"></div>
+        </div>
+
+        <div id="tab4" class="section">
+            <h3 style="color:var(--gold)">نظام الإحالة 🔗</h3>
+            <div class="task-card" style="text-align:center;">
+                <p style="font-size:13px;">لكل صديق تدعوه تحصل على <b>150 نقطة</b></p>
+                <input type="text" id="ref-link-val" readonly style="width:90%; background:#000; color:var(--gold); padding:12px; border:1px solid #333; text-align:center; border-radius:8px;">
+                <button class="btn-act btn-go" onclick="copyRef()" style="margin-top:10px;">نسخ الرابط الخاص بك</button>
+            </div>
         </div>
 
         <div id="tab5" class="section">
             <div class="task-btns" style="margin-bottom:15px;">
-                <button class="btn-act btn-go" onclick="renderLeaderboard('points')">🏆 النقاط</button>
-                <button class="btn-act btn-go" onclick="renderLeaderboard('refs')">🔗 الإحالات</button>
+                <button class="btn-act btn-go" onclick="loadLeader('points')">🏆 النقاط</button>
+                <button class="btn-act btn-go" onclick="loadLeader('refCount')">🔗 الإحالات</button>
             </div>
             <div id="leader-list"></div>
-        </div>
-
-        <div id="tab2" class="section"><div id="social-tasks"></div></div>
-        <div id="tab4" class="section">
-            <div class="task-card" style="text-align:center;">
-                <input type="text" id="ref-link-val" readonly style="width:90%; background:#000; color:var(--gold); padding:10px; border:1px solid #222;">
-                <button class="btn-act btn-go" onclick="copyRef()" style="margin-top:10px;">نسخ الرابط</button>
-            </div>
         </div>
     </div>
 
@@ -94,7 +101,7 @@
         <button class="nav-item active" onclick="showTab(1, this)">🏠<br>رئيسية</button>
         <button class="nav-item" onclick="showTab(2, this)">🎯<br>مهام</button>
         <button class="nav-item" onclick="showTab(3, this)">⚡<br>أسبوعية</button>
-        <button class="nav-item" onclick="showTab(4, this)">🔗<br>الإحالة</button>
+        <button class="nav-item" onclick="showTab(4, this)">🔗<br>إحالة</button>
         <button class="nav-item" onclick="showTab(5, this)">🏆<br>النقاط</button>
     </nav>
 
@@ -108,99 +115,102 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const params = new URLSearchParams(window.location.search);
-        let uid = params.get('id') || localStorage.getItem('age_uid') || "U"+Math.floor(Math.random()*9999);
+        let uid = localStorage.getItem('age_uid') || "U"+Math.floor(Math.random()*9999);
         localStorage.setItem('age_uid', uid);
+        document.getElementById('ref-link-val').value = `https://t.me/AGEIQ_BOT?start=${uid}`;
 
-        let activeGame = 'knives';
+        // --- محرك لعبة السكاكين فقط ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        let gameActive = false, player = { x: 50, y: 200, w: 30, h: 30, dy: 0 }, enemies = [], coins = [], moveDir = 0;
-
-        function setGame(m) { 
-            activeGame = m; 
-            document.getElementById('platform-ctrls').style.display = (m==='platform'?'flex':'none');
-            gameActive = false; 
-            document.getElementById('game-ui').style.display='flex';
-        }
+        let gActive = false, enemies = [];
 
         function startGame() {
             canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-            gameActive = true; enemies = []; coins = []; player = { x: 50, y: 200, w: 30, h: 30, dy: 0, grounded: false };
-            document.getElementById('game-ui').style.display = 'none';
-            if(activeGame === 'platform') generateLevel();
-            loop();
+            gActive = true; enemies = [];
+            document.getElementById('game-ui').style.display='none';
+            gameLoop();
         }
 
-        function generateLevel() {
-            for(let i=0; i<5; i++) coins.push({x: 100+i*80, y: 150, v: true});
+        function gameLoop() {
+            if(!gActive) return;
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            if(Math.random()<0.02) enemies.push({x:Math.random()*(canvas.width-40), y:-30, s:2.5});
+            
+            enemies.forEach((o,i) => {
+                o.y += o.s;
+                ctx.fillStyle = 'red';
+                ctx.fillRect(o.x, o.y, 40, 20);
+                if(o.y > canvas.height) { gActive = false; document.getElementById('game-ui').style.display='flex'; }
+            });
+            requestAnimationFrame(gameLoop);
         }
 
-        function loop() {
-            if(!gameActive) return;
-            ctx.clearRect(0,0, canvas.width, canvas.height);
-            if(activeGame === 'knives') {
-                // منطق السكاكين (كودك الأصلي مع تحسين)
-                ctx.fillStyle = "red";
-                if(Math.random() < 0.02) enemies.push({x: Math.random()*canvas.width, y: 0});
-                enemies.forEach((en, i) => {
-                    en.y += 2; ctx.fillRect(en.x, en.y, 30, 20);
-                    if(en.y > canvas.height) gameActive = false;
+        canvas.addEventListener('touchstart', (e) => {
+            if(gActive) {
+                let rect = canvas.getBoundingClientRect();
+                let tx = e.touches[0].clientX - rect.left;
+                enemies.forEach((o,i) => {
+                    if(Math.abs(o.x + 20 - tx) < 40) { enemies.splice(i,1); addPts(1); }
                 });
-            } else {
-                // منطق الحركة
-                player.x += moveDir * 4; player.dy += 0.8; player.y += player.dy;
-                if(player.y > 250) { player.y = 250; player.dy = 0; player.grounded = true; }
-                ctx.fillStyle = "gold";
-                coins.forEach(c => { if(c.v) { ctx.fillText("🪙", c.x, c.y); if(Math.abs(player.x-c.x)<20) { c.v=false; addPoints(1); } } });
-                ctx.fillStyle = "#00f"; ctx.fillRect(player.x, player.y, player.w, player.h);
             }
-            requestAnimationFrame(loop);
+        });
+
+        // --- المهام والبيانات ---
+        const dTasks = [
+            {id:'t1', n:'متابعة تويتر', u:'https://x.com/ktr_2008'},
+            {id:'t2', n:'قروب تلغرام', u:'https://t.me/AGEGOLD'},
+            {id:'t3', n:'قناة يوتيوب', u:'https://www.youtube.com/@AGECOIN'},
+            {id:'t4', n:'إعادة نشر التغريدة', u:'https://x.com/ktr_2008'}
+        ];
+
+        function bindWallet() {
+            let a = document.getElementById('avax-addr').value;
+            if(a.length>10) { db.ref(`players/${uid}/wallet`).set(a); alert("تم الربط بنجاح!"); }
         }
 
-        function move(d) { moveDir = d; }
-        function stopMove() { moveDir = 0; }
-        function jump() { if(player.grounded) { player.dy = -12; player.grounded = false; } }
+        db.ref('players/'+uid).on('value', s => {
+            let d = s.val() || {};
+            document.getElementById('user-pts').innerText = (d.points||0).toLocaleString();
+            if(d.wallet) document.getElementById('wallet-wrap').innerHTML = `<span style="color:var(--gold); font-size:11px; font-weight:bold;">تم الربط ✅</span>`;
+            
+            let h = '';
+            dTasks.forEach(t => {
+                let done = d.doneTasks?.[t.id];
+                h += `<div class="task-card"><span>${t.n} (+50)</span><div class="task-btns">
+                    <button class="btn-act btn-go" onclick="window.open('${t.u}')">فتح</button>
+                    <button class="btn-act ${done?'btn-done':'btn-v'}" onclick="vTask('${t.id}',${done})">${done?'مكتمل ✅':'تحقق'}</button>
+                </div></div>`;
+            });
+            document.getElementById('daily-list').innerHTML = h;
+        });
 
-        function addPoints(p) { db.ref(`players/${uid}/points`).transaction(c => (c||0)+p); }
+        function vTask(id, done) { if(!done) { addPts(50); db.ref(`players/${uid}/doneTasks/${id}`).set(true); } }
+        function addPts(p) { db.ref(`players/${uid}/points`).transaction(c => (c||0)+p); }
 
-        // --- المتصدرين ---
-        function renderLeaderboard(type) {
-            db.ref('players').orderByChild(type === 'points' ? 'points' : 'refCount').limitToLast(10).once('value', s => {
-                let list = [];
-                s.forEach(child => { list.push({id: child.key, ...child.val()}); });
-                list.reverse();
-                let html = '';
-                list.forEach((u, i) => {
+        function loadLeader(type) {
+            db.ref('players').orderByChild(type).limitToLast(10).once('value', s => {
+                let l = []; s.forEach(c => { l.push({id:c.key, ...c.val()}); });
+                l.reverse(); let h = '';
+                l.forEach((u, i) => {
                     let isMe = u.id === uid;
-                    html += `<div class="leader-item ${isMe?'me':''}">
-                        <span>#${i+1} ${isMe ? 'You' : (u.username || 'لاعب')}</span>
-                        <span>${(type==='points' ? u.points : u.refCount) || 0}</span>
-                    </div>`;
+                    h += `<div class="leader-item ${isMe?'me':''}"><span>#${i+1} ${isMe?'You':(u.user||'لاعب')}</span><span>${u[type]||0}</span></div>`;
                 });
-                document.getElementById('leader-list').innerHTML = html;
+                document.getElementById('leader-list').innerHTML = h;
             });
         }
 
-        // --- المهام الأسبوعية ---
         function renderWeekly() {
-            let prog = JSON.parse(localStorage.getItem('week_prog')) || {last: 0, day: 1};
-            let now = Date.now();
-            let html = '';
+            let p = JSON.parse(localStorage.getItem('age_week')) || {last:0, day:1};
+            let now = Date.now(), h = '';
             for(let i=1; i<=7; i++) {
-                let canClaim = (i === prog.day && now - prog.last > 86400000);
-                if(i === prog.day && prog.last === 0) canClaim = true;
-                html += `<div class="day-card" style="border: 1px solid ${i<=prog.day?'var(--gold)':'#222'}">
-                     اليوم ${i} <br> 💰 ${i*100}
-                    <button class="btn-claim" ${!canClaim?'disabled style="opacity:0.5"':''} onclick="claimDay(${i})">${i<prog.day?'✅':'استلام'}</button>
-                </div>`;
+                let can = (i===p.day && (now-p.last > 86400000 || p.last===0));
+                h += `<div class="task-card" style="display:inline-block; width:44%; margin:5px; font-size:12px;">اليوم ${i}<br>💰 ${i*100}<button class="btn-act btn-v" ${!can?'disabled style="opacity:0.3"':''} onclick="claimW(${i})">${i<p.day?'✅':'استلام'}</button></div>`;
             }
-            document.getElementById('days-container').innerHTML = html;
+            document.getElementById('weekly-list').innerHTML = h;
         }
 
-        function claimDay(d) {
-            addPoints(d*100);
-            localStorage.setItem('week_prog', JSON.stringify({last: Date.now(), day: d+1}));
+        function claimW(d) {
+            addPts(d*100); localStorage.setItem('age_week', JSON.stringify({last:Date.now(), day:d+1}));
             renderWeekly();
         }
 
@@ -209,19 +219,15 @@
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             document.getElementById('tab'+t).classList.add('active');
             el.classList.add('active');
-            if(t === 5) renderLeaderboard('points');
-            if(t === 3) renderWeekly();
+            if(t===5) loadLeader('points');
+            if(t===3) renderWeekly();
         }
 
-        db.ref('players/'+uid+'/points').on('value', s => { document.getElementById('user-pts').innerText = (s.val()||0).toLocaleString(); });
-        
-        canvas.addEventListener('touchstart', (e) => {
-            if(activeGame === 'knives' && gameActive) {
-                const rect = canvas.getBoundingClientRect();
-                let kX = e.touches[0].clientX - rect.left;
-                enemies.forEach((en, i) => { if(Math.abs(en.x - kX) < 40) { enemies.splice(i,1); addPoints(5); } });
-            }
-        });
+        function copyRef() {
+            const copyText = document.getElementById("ref-link-val");
+            copyText.select(); document.execCommand("copy");
+            alert("تم نسخ رابط الإحالة الخاص بك!");
+        }
 
         renderWeekly();
     </script>
