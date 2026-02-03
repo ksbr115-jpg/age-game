@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AGE GOLD - Official System</title>
+    <title>AGE GOLD - 2 Games System</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
@@ -11,29 +11,26 @@
         body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; overflow-x: hidden; touch-action: manipulation; }
         
         .container { padding: 70px 15px 100px; text-align: center; }
-        .hero { background: linear-gradient(180deg, #151515, #000); border: 1px solid #222; border-radius: 20px; padding: 20px; margin-bottom: 20px; }
+        .hero { background: linear-gradient(180deg, #151515, #000); border: 1px solid #222; border-radius: 20px; padding: 20px; margin-bottom: 15px; }
         .hero h1 { font-size: 40px; color: var(--gold); margin: 0; }
         
         .section { display: none; animation: fadeIn 0.3s; }
         .section.active { display: block; }
 
-        /* منطقة اللعبة الجديدة */
-        #game-container { position: relative; width: 100%; height: 320px; background: #87CEEB; border: 2px solid var(--gold); border-radius: 15px; overflow: hidden; }
+        /* منطقة الألعاب */
+        #game-box { position: relative; width: 100%; height: 320px; background: #050505; border: 2px solid var(--gold); border-radius: 15px; overflow: hidden; }
         canvas { display: block; width: 100%; height: 100%; }
         
-        .controls-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px; background: #111; border-radius: 15px; margin-top: 10px; }
-        .btn-ctrl { background: #222; color: white; border: 2px solid var(--gold); width: 65px; height: 65px; border-radius: 50%; font-size: 25px; display: flex; align-items: center; justify-content: center; user-select: none; }
-        .btn-jump { width: 75px; height: 75px; background: var(--gold); color: #000; }
+        .game-selector { display: flex; gap: 10px; margin-bottom: 10px; }
+        .btn-select { flex: 1; padding: 10px; background: #222; color: #fff; border: 1px solid var(--gold); border-radius: 8px; font-size: 12px; }
+        .btn-select.active { background: var(--gold); color: #000; }
 
-        /* المهام والقوائم */
-        .task-card { background: var(--card); border: 1px solid #222; border-radius: 15px; padding: 15px; margin-bottom: 12px; text-align: right; }
-        .btn-act { padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-go { background: #fff; color: #000; }
+        .controls-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #111; border-radius: 15px; margin-top: 10px; }
+        .btn-ctrl { background: #333; color: white; border: 2px solid var(--gold); width: 60px; height: 60px; border-radius: 50%; font-size: 24px; display: flex; align-items: center; justify-content: center; }
 
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: #080808; border-top: 1px solid #222; display: flex; height: 75px; z-index: 1000; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #555; background: none; border: none; }
         .nav-item.active { color: var(--gold); border-top: 2px solid var(--gold); }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
@@ -42,35 +39,34 @@
     <div class="container">
         <div class="hero">
             <h1 id="user-pts">0</h1>
-            <p id="lvl-display" style="color:var(--gold); font-weight:bold;">المرحلة: 1</p>
+            <p id="game-status" style="color:var(--gold); font-size:12px; margin-top:5px;">اختر لعبة وابدأ الربح!</p>
         </div>
 
         <div id="tab1" class="section active">
-            <div id="game-container">
+            <div class="game-selector">
+                <button class="btn-select active" onclick="switchGame('knives', this)">⚔️ لعبة السكاكين</button>
+                <button class="btn-select" onclick="switchGame('platform', this)">🏃 لعبة الحركة</button>
+            </div>
+
+            <div id="game-box">
                 <canvas id="gameCanvas"></canvas>
-                <div id="game-ui" style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:5;">
-                    <button onclick="startGame()" style="background:var(--gold); border:none; padding:15px 40px; border-radius:10px; font-weight:bold; font-size:18px;">ابدأ المغامرة 🪙</button>
+                <div id="game-ui" style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <button onclick="initiateGame()" style="background:var(--gold); border:none; padding:15px 30px; border-radius:10px; font-weight:bold;">ابدأ اللعب 🎮</button>
                 </div>
             </div>
 
-            <div class="controls-row">
+            <div id="platform-controls" class="controls-row" style="display:none;">
                 <button class="btn-ctrl" onpointerdown="move(-1)" onpointerup="stopMove()">⬅️</button>
-                <button class="btn-ctrl btn-jump" onpointerdown="jump()">⬆️</button>
+                <button class="btn-ctrl" onpointerdown="jump()" style="background:var(--gold); color:#000;">⬆️</button>
                 <button class="btn-ctrl" onpointerdown="move(1)" onpointerup="stopMove()">➡️</button>
             </div>
+            <p id="knife-hint" style="font-size:10px; color:#555; margin-top:10px;">في لعبة السكاكين: انقر على الشاشة للإطلاق</p>
         </div>
 
-        <div id="tab2" class="section">
-            <h3 style="color:var(--gold)">المهام الاجتماعية</h3>
-            <div id="social-tasks"></div>
-        </div>
-
+        <div id="tab2" class="section"><div id="social-tasks"></div></div>
         <div id="tab4" class="section">
-            <div class="task-card" style="text-align:center;">
-                <p>رابط الإحالة (100 نقطة)</p>
-                <input type="text" id="ref-link-val" readonly style="width:100%; background:#000; color:var(--gold); border:1px solid #333; padding:10px; text-align:center;">
-                <button class="btn-act btn-go" onclick="copyRef()" style="margin-top:10px; width:100%;">نسخ الرابط</button>
-            </div>
+            <input type="text" id="ref-link-val" readonly style="width:80%; background:#111; color:var(--gold); border:1px solid #333; padding:10px; border-radius:5px; text-align:center;">
+            <button onclick="copyRef()" style="background:var(--gold); border:none; padding:10px; border-radius:5px; margin-top:10px;">نسخ الرابط</button>
         </div>
     </div>
 
@@ -93,92 +89,120 @@
         const params = new URLSearchParams(window.location.search);
         let uid = params.get('id') || localStorage.getItem('age_uid') || "U"+Math.floor(Math.random()*9999);
         localStorage.setItem('age_uid', uid);
-        document.getElementById('ref-link-val').value = `https://t.me/AGEIQ_bot?start=${uid}`;
 
-        // --- محرك اللعبة المتطور (1000 مرحلة) ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        let gameMode = 'knives'; // الوضع الافتراضي
         let gameActive = false, currentLevel = 1;
         
+        // أصول الألعاب
         const playerImg = new Image(); playerImg.src = 'https://img.icons8.com/color/96/super-mario.png';
         
-        let player = { x: 50, y: 200, w: 35, h: 35, dy: 0, jump: 12, speed: 5, grounded: false };
-        let platforms = [];
-        let coins = [];
+        // متغيرات اللعبتين
+        let knife = { x: 0, y: 0, active: false };
+        let enemies = [], platforms = [], coins = [];
+        let player = { x: 50, y: 200, w: 30, h: 30, dy: 0, jump: 11, speed: 4, grounded: false };
         let moveDir = 0;
 
-        function generateLevel(lvl) {
-            platforms = [{x: 0, y: 300, w: 2000, h: 50}]; // الأرضية
-            coins = [];
-            // توليد منصات عشوائية بناءً على رقم المرحلة
-            for(let i=0; i<5; i++) {
-                platforms.push({ x: 100 + (i*150), y: 250 - (Math.random()*100), w: 80, h: 15 });
-                coins.push({ x: 120 + (i*150), y: 150, v: true });
-            }
-            player.x = 50; player.y = 200;
-            document.getElementById('lvl-display').innerText = `المرحلة: ${lvl}`;
+        function switchGame(mode, btn) {
+            gameMode = mode;
+            gameActive = false;
+            document.querySelectorAll('.btn-select').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('game-ui').style.display = 'flex';
+            document.getElementById('platform-controls').style.display = (mode === 'platform') ? 'flex' : 'none';
+            document.getElementById('knife-hint').style.display = (mode === 'knives') ? 'block' : 'none';
+            ctx.clearRect(0,0, canvas.width, canvas.height);
         }
 
-        function startGame() {
+        function initiateGame() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
             document.getElementById('game-ui').style.display = 'none';
-            canvas.width = 400; canvas.height = 320;
-            generateLevel(currentLevel);
             gameActive = true;
-            gameLoop();
+            if(gameMode === 'platform') generatePlatformLevel(currentLevel);
+            else spawnKnifeEnemy();
+            requestAnimationFrame(update);
+        }
+
+        // --- منطق لعبة السكاكين ---
+        function spawnKnifeEnemy() {
+            if(gameActive && gameMode === 'knives') {
+                enemies.push({ x: Math.random() * (canvas.width - 40), y: -40, speed: 2 });
+                setTimeout(spawnKnifeEnemy, 1500);
+            }
+        }
+
+        // --- منطق لعبة الحركة (1000 مرحلة) ---
+        function generatePlatformLevel(lvl) {
+            platforms = [{x: 0, y: 280, w: 1000, h: 40}];
+            coins = [];
+            for(let i=0; i<4; i++) {
+                platforms.push({ x: 100 + (i*120), y: 220 - (i*30), w: 70, h: 10 });
+                coins.push({ x: 120 + (i*120), y: 180 - (i*30), v: true });
+            }
+            player.x = 20; player.y = 200;
+            document.getElementById('game-status').innerText = `لعبة الحركة - المرحلة: ${lvl}`;
         }
 
         function move(d) { moveDir = d; }
         function stopMove() { moveDir = 0; }
         function jump() { if(player.grounded) { player.dy = -player.jump; player.grounded = false; } }
 
-        function gameLoop() {
+        function update() {
             if(!gameActive) return;
-            ctx.clearRect(0,0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // الفيزياء والجاذبية
-            player.x += moveDir * player.speed;
-            player.dy += 0.8;
-            player.y += player.dy;
-            player.grounded = false;
-
-            // رسم المنصات والتصادم
-            ctx.fillStyle = "#5d4037";
-            platforms.forEach(p => {
-                ctx.fillRect(p.x, p.y, p.w, p.h);
-                if(player.x < p.x+p.w && player.x+player.w > p.x && player.y+player.h > p.y && player.y+player.h < p.y+p.h) {
-                    player.grounded = true; player.dy = 0; player.y = p.y - player.h;
+            if(gameMode === 'knives') {
+                canvas.style.background = "#050505";
+                if(knife.active) {
+                    ctx.fillStyle = "#fff"; ctx.fillRect(knife.x, knife.y, 3, 15);
+                    knife.y -= 7; if(knife.y < 0) knife.active = false;
                 }
-            });
-
-            // رسم العملات 🪙 وجمعها
-            let activeCoins = 0;
-            coins.forEach(c => {
-                if(c.v) {
-                    activeCoins++;
-                    ctx.font = "20px Arial";
-                    ctx.fillText("🪙", c.x, c.y);
-                    if(Math.abs(player.x - c.x) < 25 && Math.abs(player.y - c.y) < 25) {
-                        c.v = false;
-                        db.ref(`players/${uid}/points`).transaction(p => (p||0) + 1);
+                enemies.forEach((en, i) => {
+                    en.y += en.speed; ctx.fillStyle = "red"; ctx.fillRect(en.x, en.y, 40, 20);
+                    if(knife.active && knife.x > en.x && knife.x < en.x+40 && knife.y > en.y && knife.y < en.y+20) {
+                        enemies.splice(i, 1); knife.active = false; addPoints(5);
                     }
-                }
-            });
+                    if(en.y > canvas.height) { gameActive = false; document.getElementById('game-ui').style.display = 'flex'; }
+                });
+            } else {
+                canvas.style.background = "#87CEEB";
+                player.x += moveDir * player.speed; player.dy += 0.6; player.y += player.dy;
+                player.grounded = false;
 
-            // الانتقال للمرحلة التالية
-            if(activeCoins === 0 && currentLevel < 1000) {
-                currentLevel++;
-                generateLevel(currentLevel);
+                platforms.forEach(p => {
+                    ctx.fillStyle = "#5d4037"; ctx.fillRect(p.x, p.y, p.w, p.h);
+                    if(player.x < p.x+p.w && player.x+player.w > p.x && player.y+player.h > p.y && player.y+player.h < p.y+p.h) {
+                        player.grounded = true; player.dy = 0; player.y = p.y - player.h;
+                    }
+                });
+
+                let activeCoins = 0;
+                coins.forEach(c => {
+                    if(c.v) {
+                        activeCoins++; ctx.font = "18px Arial"; ctx.fillText("🪙", c.x, c.y);
+                        if(Math.abs(player.x - c.x) < 25 && Math.abs(player.y - c.y) < 25) {
+                            c.v = false; addPoints(1);
+                        }
+                    }
+                });
+                if(activeCoins === 0) { currentLevel++; generatePlatformLevel(currentLevel); }
+                ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+                if(player.y > canvas.height) { player.x = 20; player.y = 200; }
             }
-
-            ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
-            
-            // سقوط اللاعب
-            if(player.y > canvas.height) { player.x = 50; player.y = 200; }
-
-            requestAnimationFrame(gameLoop);
+            requestAnimationFrame(update);
         }
 
-        // --- نظام المهام والقوائم ---
+        canvas.addEventListener('mousedown', (e) => {
+            if(gameMode === 'knives' && !knife.active && gameActive) {
+                const rect = canvas.getBoundingClientRect();
+                knife.x = e.clientX - rect.left; knife.y = canvas.height - 20; knife.active = true;
+            }
+        });
+
+        function addPoints(p) { db.ref(`players/${uid}/points`).transaction(current => (current || 0) + p); }
+
         function showTab(t, el) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -186,17 +210,9 @@
             el.classList.add('active');
         }
 
-        db.ref('players/'+uid).on('value', (s) => {
-            let data = s.val() || {points:0};
-            document.getElementById('user-pts').innerText = (data.points || 0).toLocaleString();
+        db.ref('players/'+uid+'/points').on('value', s => {
+            document.getElementById('user-pts').innerText = (s.val() || 0).toLocaleString();
         });
-
-        function copyRef() {
-            const input = document.getElementById("ref-link-val");
-            input.select();
-            document.execCommand("copy");
-            alert("تم النسخ!");
-        }
     </script>
 </body>
 </html>
