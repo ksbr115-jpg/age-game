@@ -7,10 +7,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        :root { --gold: #f1c40f; --bg: #000; --card: #111; --gray: #333; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        :root { --gold: #f1c40f; --bg: #000; --card: #111; --gray: #333; --red: #e74c3c; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; overflow-x: hidden; touch-action: manipulation; }
         
-        /* المحفظة */
         #wallet-header { position: fixed; top: 10px; right: 10px; z-index: 2000; }
         .wallet-box { background: #1a1a1a; padding: 5px; border-radius: 10px; border: 1px solid var(--gold); display: flex; gap: 5px; }
         .wallet-box input { background: #000; border: 1px solid #333; color: var(--gold); font-size: 10px; padding: 5px; width: 100px; border-radius: 5px; outline: none; }
@@ -23,10 +22,13 @@
         .section { display: none; animation: fadeIn 0.3s; }
         .section.active { display: block; }
 
-        /* كروت المهام الاجتماعية */
+        /* منطقة اللعبة الحركية */
+        #game-area { background: #080808; border-radius: 15px; border: 1px solid #222; overflow: hidden; position: relative; margin-top: 15px; }
+        canvas { display: block; background: #050505; width: 100%; height: 300px; touch-action: none; }
+        .game-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); }
+
         .task-card { background: var(--card); border: 1px solid #222; border-radius: 15px; padding: 15px; margin-bottom: 12px; text-align: right; }
         .task-title { font-weight: bold; font-size: 15px; display: block; margin-bottom: 5px; }
-        .task-reward { color: var(--gold); font-size: 12px; }
         .task-btns { display: flex; gap: 8px; margin-top: 10px; }
         .btn-act { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
         .btn-go { background: #fff; color: #000; }
@@ -34,20 +36,11 @@
         .btn-v.ready { background: var(--gold); color: #000; cursor: pointer; }
         .btn-done { background: #222 !important; color: #555 !important; cursor: default; }
 
-        /* نظام الـ 7 أيام */
         .days-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
-        .day-card { background: var(--card); border: 1px solid #222; padding: 15px; border-radius: 12px; opacity: 0.5; position: relative; }
+        .day-card { background: var(--card); border: 1px solid #222; padding: 15px; border-radius: 12px; opacity: 0.5; }
         .day-card.open { opacity: 1; border-color: var(--gold); }
-        .btn-claim { background: var(--gold); color: #000; border: none; padding: 8px; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 8px; font-size: 11px; }
-        .btn-claim:disabled { background: #222; color: #555; }
+        .btn-claim { background: var(--gold); color: #000; border: none; padding: 8px; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 8px; }
 
-        /* التصنيفات */
-        .list-title { color: var(--gold); border-right: 4px solid var(--gold); padding-right: 12px; text-align: right; margin: 25px 0 15px; font-size: 18px; }
-        .rank-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #0d0d0d; margin-bottom: 4px; border-radius: 8px; }
-        .rank-info { display: flex; align-items: center; gap: 12px; }
-        .rank-number { background: var(--gold); color: #000; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 12px; }
-
-        /* المنيو السفلي */
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: #080808; border-top: 1px solid #222; display: flex; height: 75px; z-index: 1000; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #555; border: none; background: none; gap: 5px; cursor: pointer; }
         .nav-item.active { color: var(--gold); border-top: 2px solid var(--gold); }
@@ -71,14 +64,22 @@
         </div>
 
         <div id="tab1" class="section active">
-            <div style="background:#111; padding:20px; border-radius:15px; border:1px solid #222;">
-                <h3 style="color:var(--gold);">الرئيسية</h3>
-                <p>مرحباً بك! اتمم المهام واجمع نقاط $AGE يومياً.</p>
+            <div style="background:#111; padding:15px; border-radius:15px; border:1px solid #222;">
+                <h3 style="color:var(--gold); margin:0 0 10px 0;">ساحة معركة AGE ⚔️</h3>
+                <p style="font-size:12px; color:#aaa;">ارمِ السكاكين على الأعداء! كل إصابة = 5 نقاط</p>
+                
+                <div id="game-area">
+                    <canvas id="gameCanvas"></canvas>
+                    <div id="game-ui" class="game-overlay">
+                        <button class="btn-link" style="padding:15px 30px; font-size:16px;" onclick="startGame()">إبدأ القتال 🎮</button>
+                    </div>
+                </div>
+                <p style="font-size:10px; color:#555; margin-top:10px;">انقر على الشاشة لإطلاق السكين</p>
             </div>
         </div>
 
         <div id="tab2" class="section">
-            <h3 class="list-title">مهام</h3>
+            <h3 class="list-title">مهام اجتماعية</h3>
             <div id="social-tasks"></div>
         </div>
 
@@ -88,18 +89,18 @@
         </div>
 
         <div id="tab4" class="section">
-            <h3 class="list-title">تصنيف الاحاله</h3>
+            <h3 class="list-title">نظام الإحالة</h3>
             <div class="task-card" style="text-align:center; border: 1px dashed var(--gold);">
-                <span class="task-title">نظام الإحالة الجديد 🚀</span>
-                <p style="font-size:12px; color:#aaa;">شارك الرابط واحصل على <b>100 نقطة</b> لكل صديق!</p>
-                <input type="text" id="ref-link-val" readonly style="width:100%; background:#000; color:var(--gold); border:1px solid #333; padding:8px; border-radius:5px; text-align:center; font-size:11px; margin-bottom:10px;">
-                <button class="btn-act btn-go" onclick="copyRef()">نسخ رابط الإحالة</button>
+                <span class="task-title">شارك واربح 🚀</span>
+                <p style="font-size:12px; color:#aaa;">رابطك الخاص لدعوة الأصدقاء (100 نقطة لكل إحالة):</p>
+                <input type="text" id="ref-link-val" readonly style="width:100%; background:#000; color:var(--gold); border:1px solid #333; padding:10px; border-radius:5px; text-align:center; margin-bottom:10px;">
+                <button class="btn-act btn-go" onclick="copyRef()">نسخ الرابط</button>
             </div>
             <div id="ref-list"></div>
         </div>
 
         <div id="tab5" class="section">
-            <h3 class="list-title">تصنيف النقاط</h3>
+            <h3 class="list-title">المتصدرين</h3>
             <div id="pts-list"></div>
         </div>
     </div>
@@ -113,6 +114,7 @@
     </nav>
 
     <script>
+        // تكوين Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDt6tmNq_On6_wnCbQdqmiMcNkgZAxGZPo",
             databaseURL: "https://age-game-d193d-default-rtdb.firebaseio.com",
@@ -127,90 +129,127 @@
         let uid = params.get('id') || localStorage.getItem('age_uid') || "U"+Math.floor(Math.random()*9999);
         localStorage.setItem('age_uid', uid);
 
-        // إعداد رابط البوت مع المعرف الخاص باللاعب
         document.getElementById('ref-link-val').value = `https://t.me/AGEIQ_bot?start=${uid}`;
 
         let userData = {};
         let openedLinks = {};
 
-        // تم حذف المهمة الأخيرة "دعوة صديق للقناة"
+        // قائمة المهام المحدثة (حذف المهمة الأخيرة)
         const socialTasks = [
             {id:'s1', n:'متابعة تويتر', u:'https://x.com/ktr_2008'},
             {id:'s2', n:'مجموعة تلغرام', u:'https://t.me/AGEGOLD'},
             {id:'s3', n:'إعجاب بآخر منشور', u:'https://x.com/ktr_2008'},
             {id:'s4', n:'إعادة نشر التغريدة', u:'https://x.com/ktr_2008'},
-            {id:'s5', n:'رسالة في المجموعة', u:'https://t.me/AGEGOLD'},
-            {id:'s6', n:'اشتراك يوتيوب', u:'https://www.youtube.com/@AGECOIN'}
+            {id:'s5', n:'رسالة في المجموعة', u:'https://t.me/AGEGOLD'}
         ];
 
+        // --- محرك اللعبة الحركية ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let gameActive = false;
+        let knife = { x: 0, y: 0, active: false };
+        let enemies = [];
+        let gamePoints = 0;
+
+        function initGame() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+
+        function startGame() {
+            initGame();
+            gameActive = true;
+            gamePoints = 0;
+            enemies = [];
+            document.getElementById('game-ui').style.display = 'none';
+            spawnEnemy();
+            animate();
+        }
+
+        function spawnEnemy() {
+            if(!gameActive) return;
+            enemies.push({ x: Math.random() * (canvas.width - 40), y: -50, speed: 2 + Math.random() * 2 });
+            setTimeout(spawnEnemy, 1500);
+        }
+
+        function animate() {
+            if(!gameActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // السكين
+            if(knife.active) {
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(knife.x, knife.y, 4, 15);
+                knife.y -= 8;
+                if(knife.y < 0) knife.active = false;
+            }
+
+            // الأعداء
+            enemies.forEach((en, index) => {
+                en.y += en.speed;
+                ctx.fillStyle = 'var(--red)';
+                ctx.fillRect(en.x, en.y, 40, 20);
+
+                // تصادم السكين مع العدو
+                if(knife.active && knife.x > en.x && knife.x < en.x + 40 && knife.y > en.y && knife.y < en.y + 20) {
+                    enemies.splice(index, 1);
+                    knife.active = false;
+                    addPoints(5); // كسب 5 نقاط
+                }
+
+                // الخسارة إذا تجاوز العدو الشاشة
+                if(en.y > canvas.height) {
+                    gameActive = false;
+                    document.getElementById('game-ui').style.display = 'flex';
+                    document.getElementById('game-ui').innerHTML = `<h2 style="color:red">انتهت اللعبة!</h2><p>جمعت ${gamePoints} نقطة</p><button class="btn-link" onclick="startGame()">إعادة</button>`;
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if(!knife.active && gameActive) {
+                const rect = canvas.getBoundingClientRect();
+                knife.x = e.clientX - rect.left;
+                knife.y = canvas.height - 20;
+                knife.active = true;
+            }
+        });
+
+        function addPoints(pts) {
+            gamePoints += pts;
+            db.ref(`players/${uid}/points`).transaction(p => (p || 0) + pts);
+        }
+
+        // --- نظام المهام والقائمة ---
         db.ref('players/'+uid).on('value', (s) => {
-            userData = s.val() || {points:0, current_day:0, last_claim:0, invites:0};
+            userData = s.val() || {points:0};
             document.getElementById('user-pts').innerText = (userData.points || 0).toLocaleString();
             document.getElementById('user-name').innerText = "@" + (userData.username || username);
-            if(userData.wallet) document.getElementById('wallet-header').style.display = 'none';
             renderSocial(userData.done || {});
-            renderWeekly();
         });
 
         function renderSocial(done) {
             let h = '';
             socialTasks.forEach(t => {
                 const isD = done[t.id];
-                const isR = openedLinks[t.id] ? 'ready' : '';
                 h += `<div class="task-card">
                     <span class="task-title">${t.n}</span>
                     <div class="task-btns">
                         <button class="btn-act btn-go" onclick="goLink('${t.id}','${t.u}')">فتح</button>
-                        <button id="v-${t.id}" class="btn-act ${isD?'btn-done':'btn-v '+isR}" onclick="verify('${t.id}',${isD})">${isD?'مكتمل ✅':'تحقق'}</button>
+                        <button class="btn-act ${isD?'btn-done':'btn-v ready'}" onclick="verify('${t.id}',${isD})">${isD?'مكتمل ✅':'تحقق'}</button>
                     </div>
                 </div>`;
             });
             document.getElementById('social-tasks').innerHTML = h;
         }
 
-        function goLink(id, u) { window.open(u,'_blank'); openedLinks[id]=true; renderSocial(userData.done||{}); }
-
+        function goLink(id, u) { window.open(u,'_blank'); openedLinks[id]=true; }
         function verify(id, isD) {
-            if(isD || !openedLinks[id]) return alert("افتح الرابط أولاً!");
+            if(isD) return;
             db.ref(`players/${uid}/points`).transaction(p=>(p||0)+50);
             db.ref(`players/${uid}/done/${id}`).set(true);
-        }
-
-        function renderWeekly() {
-            const container = document.getElementById('days-container');
-            container.innerHTML = '';
-            const now = Date.now();
-            const last = userData.last_claim || 0;
-            const current = userData.current_day || 0;
-            const isWait = (now - last) < 86400000;
-
-            for(let i=1; i<=7; i++) {
-                let status = 'closed'; let btnTxt = 'استلام'; let dis = true;
-                if(i <= current) { status='done'; btnTxt='مكتمل ✅'; }
-                else if(i === current + 1) {
-                    if(!isWait || current === 0) { status='open'; dis=false; }
-                    else { status='waiting'; btnTxt='بعد 24س'; }
-                }
-                container.innerHTML += `<div class="day-card ${status==='open'?'open':''}">
-                    <b>اليوم ${i}</b><br><small>+${i*25} نقطة</small>
-                    <button class="btn-claim" ${dis?'disabled':''} onclick="claimDay(${i})">${btnTxt}</button>
-                </div>`;
-            }
-        }
-
-        function claimDay(day) {
-            db.ref('players/'+uid).update({
-                points: (userData.points||0) + (day*25),
-                current_day: day,
-                last_claim: Date.now()
-            });
-        }
-
-        function copyRef() {
-            const copyText = document.getElementById("ref-link-val");
-            copyText.select();
-            document.execCommand("copy");
-            alert("تم نسخ رابط البوت! ابدأ بدعوة أصدقائك للحصول على 100 نقطة.");
         }
 
         function showTab(t, el) {
@@ -218,28 +257,16 @@
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             document.getElementById('tab'+t).classList.add('active');
             el.classList.add('active');
-            if(t===4) loadLDR('invites', 'ref-list', 'إحالة');
-            if(t===5) loadLDR('points', 'pts-list', 'نقطة');
         }
 
-        function loadLDR(f, id, unit) {
-            db.ref('players').orderByChild(f).limitToLast(100).once('value', s => {
-                let arr = [];
-                s.forEach(c => { const d=c.val(); arr.push({n:d.username||c.key, v:d[f]||0}); });
-                arr.sort((a,b)=>b.v - a.v);
-                document.getElementById(id).innerHTML = arr.map((p,i) => `
-                <div class="rank-row">
-                    <div class="rank-info"><div class="rank-number">${i+1}</div>${p.n}</div>
-                    <div style="color:var(--gold)">${p.v} ${unit}</div>
-                </div>`).join('');
-            });
+        function copyRef() {
+            const copyText = document.getElementById("ref-link-val");
+            copyText.select();
+            document.execCommand("copy");
+            alert("تم النسخ!");
         }
 
-        async function bindWallet() {
-            const a = document.getElementById('avax-addr').value.trim();
-            if(!/^0x[a-fA-F0-9]{40}$/.test(a)) return alert("العنوان خطأ!");
-            db.ref('players/'+uid).update({wallet:a, username:username});
-        }
+        initGame();
     </script>
 </body>
 </html>
